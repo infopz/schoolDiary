@@ -35,6 +35,8 @@ def getDataAndTimer(off):
                 time.sleep(0.5)
 
 def sendMess(text, chat_id, reply_to_message_id=None, reply_markup=None, webPrev=False):
+    if chat_id.__class__.__name__ == 'Dict':
+        chat_id = chat_id['id']
     par = {
         'chat_id': chat_id,
         'text': text,
