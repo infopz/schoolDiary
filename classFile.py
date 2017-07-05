@@ -1,3 +1,5 @@
+import time
+
 class verifica:
 
     def __init__(self, data, materia, argomenti, note = ""):
@@ -17,9 +19,16 @@ class materia:
         self.voti = []
         self.media = 0.0
 
+    def __str__(self):
+        s = ""
+        for i in self.voti:
+            
+
 class voto:
 
-    pass
+    def __init__(self, voto, data):
+        self.numero = voto
+        self.data = data
 
 class compito:
 
