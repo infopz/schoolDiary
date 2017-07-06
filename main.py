@@ -31,7 +31,7 @@ def timers(): # funcion for all timers
     except IndexError:
         return
     if time.strftime('%H') == '14':
-        s = "Ehi, domani hai "
+        s = "Ehi, domani hai queste"
 
 
 def message_received(chat, message, user): # main function
