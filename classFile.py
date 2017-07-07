@@ -15,13 +15,17 @@ class Diario:
             self.giorni[data].append(newverifica)
         else:
             self.giorni[data] = [newverifica]
+        print(len(self.giorni))
 
     def view_all(self):
         s = ''
-        for i, j in self.giorni:
-            for k in j:
-                s += str(k)
+        for i in self.giorni:
+            for j in self.giorni[i]:
+                s += str(j)
         return s
+
+    def __str__(self):
+        return str(len(self.giorni))
 
 
 class Verifica:
@@ -33,8 +37,7 @@ class Verifica:
         self.note = note
 
     def __str__(self):
-        s = ""
-        s += self.data.strftime("%d/%m") + ' Verifica di ' + self.materia.short + '\n'
+        return self.data.strftime("%d/%m") + ' Verifica di ' + self.materia + '\n'  #  FIXME: da cambiare quando faccio materia
 
 
 class Materia:
