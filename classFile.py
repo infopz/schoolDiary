@@ -1,5 +1,7 @@
 from datetime import datetime
 
+import ExceptionFile
+
 
 class Diario:
 
@@ -85,5 +87,5 @@ def create_data(day, month):
         if len(day) == 1:
             day = "0"+day
         return datetime.strptime(day+month+year, "%d%m%Y")
-    except:
-        return False  # FIXME: creare classe per eccezioni (che e' meglio) cit. Puffi
+    except Exception as e:
+        raise ExceptionFile.DataCreationError()
