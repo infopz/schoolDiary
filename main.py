@@ -5,6 +5,8 @@ import apiKey
 import telegram
 
 
+bot = telegram.Bot(apiKey.apiBot)
+
 def new_verifica(message, chat, shared, args):  # per ora /newverifica nGiorno nMese materia other
     d = shared['diario']
     data = create_data(args[0], args[1])
@@ -21,7 +23,6 @@ def viewcalendar(chat, shared):
 
 
 def start_action(shared):  # setting function
-    print("Bot Started")
     shared['diario'] = Diario()
 
 
@@ -34,14 +35,10 @@ def timers():  # funcion for all timers
     if time.strftime('%H') == '14':
         s = "Ehi, domani hai queste"'''
 
+def tryFunc():
+    print("cvrcweaedw")
 
-def message_received(chat, message, user): # main function
-    if message['text'].startswith('/newverifica'):
-        new_verifica(message, chat)
-    elif message['text'].startswith('/calendar'):
-        viewcalendar(chat)
 
-if __name__ == '__main__':
-    bot = telegram.Bot(apiKey.apiBot)
-    bot.set_commands({'/newverifica': new_verifica, '/calendar': viewcalendar})
-    bot.run()
+bot.set_commands({'/newverifica': new_verifica, '/calendar': viewcalendar})
+bot.set_function({'start_action': start_action})
+bot.run()

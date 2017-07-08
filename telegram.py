@@ -1,12 +1,8 @@
 import requests
 import time
 from datetime import datetime
-import json
-import main
-import inspect
 from multiprocessing import Process, Manager
 
-import apiKey
 from ExceptionFile import *
 from telegramClass import *
 
@@ -17,39 +13,37 @@ class Bot:
         self.botKey = key
         self.offset = 0
         self.commands = {}
+        self.useful_function = {}
         self.timers = {}
-        self.contol_funcion()
+        self.allow_edited_message = False
+        self.accept_old_message = False
+        # setting bool for funcion
+        self.start_action = False  # cambiare, maybe con un dict
+        self.help_command = False
+        self.start_command = False
+        self.before_division = False
+        self.after_division = False
         print("Bot Created")
 
-    def contol_funcion(self):
-        try:
-            inspect.getfullargspec(main.start_action)
-            self.start_action = True
-        except AttributeError:
-            self.start_action = False
-        try:
-            inspect.getfullargspec(main.help_command)
-            self.help_command = True
-        except AttributeError:
-            self.help_command = False
-        try:
-            inspect.getfullargspec(main.start_command)
-            self.start_command = True
-        except AttributeError:
-            self.start_command = False
-        try:
-            inspect.getfullargspec(main.before_division)
-            self.before_division = True
-        except AttributeError:
-            self.before_division = False
-        try:
-            inspect.getfullargspec(main.after_division)
-            self.after_division = True
-        except AttributeError:
-            self.after_division = False
-
     def set_commands(self, command_dict):
-        self.commands = command_dict
+        self.commands = {}
+        for i in command_dict:
+            self.commands[i] = Command(i, command_dict[i])
+        if '/start' in self.commands:
+            self.start_command = True
+        if '/help' in self.commands:
+            self.help_command = True
+
+    def set_function(self, function_dict):
+        self.useful_function = {}
+        for i in function_dict:
+            self.useful_function[i] = Function(function_dict[i])
+        if 'start_action' in self.useful_function:
+            self.start_action = True
+        if 'before_division' in self.useful_function:
+            self.before_division = True
+        if 'after_division' in self.useful_function:
+            self.after_division = True
 
     def set_timers(self, timer_dict):
         self.timers = timer_dict
@@ -88,37 +82,53 @@ class Bot:
 
     def run(self):
         shared = Manager().dict()
-        p1 = Process(target=self.seriuosly_run, args=(shared,))
-        p2 = Process(target=self.start_timer, args=(shared,))
-        p1.start()
-        p2.start()
+        process = []
+        p1 = Process(target=self.run_bot, args=(shared,))
+        process.append(p1)
+        if len(self.timers) != 0:
+            p2 = Process(target=self.run_timer, args=(shared,))
+            process.append(p2)
+        for p in process:
+            p.start()
         try:
-            p1.join()
-            p2.join()
+            for p in process:
+                p.join()
         except KeyboardInterrupt:
             print("Shutting Down....")
-            p1.terminate()
-            p2.terminate()
+            for p in process:
+                p.terminate()
 
-    def seriuosly_run(self, shared):
+    def run_bot(self, shared):
         try:
+            self.start_date = datetime.now()
             if self.start_action:
-                main.start_action(shared)  # TODO: same thing
+                arg = []
+                for i in self.useful_function['start_action']:
+                    if i == 'bot':
+                        arg.append(self)
+                    elif i == 'shared':
+                        arg.append(shared)
+                self.useful_function['start_action'].func(*tuple(arg))  # TODO: same thing
+            print('Bot Started')
             while True:
                 update = self.get_update()
                 message = self.parse_update(update)
+                if message.date < self.start_date and not self.accept_old_message:
+                    continue
+                if message.edited and not self.allow_edited_message:
+                    continue
                 chat = message.chat
                 if self.before_division:
-                    main.before_division()  # TODO: check parameter, also dopo
+                    self.useful_function['before_division'].func()  # TODO: check parameter, also dopo
                 text_split = message.text.split()
                 if text_split[0].startswith('/'):
                     self.divide_command(text_split, message, chat, shared)
                 if self.after_division:
-                    main.after_division()
+                    self.useful_function['after_division'].func()
         except KeyboardInterrupt:
             pass
 
-    def start_timer(self, shared):
+    def run_timer(self, shared):
         timers = []
         for d in self.timers.keys():
             p = Process(target=self.manage_one_timer, args=(d, self.timers[d], shared))
@@ -141,26 +151,24 @@ class Bot:
             pass
 
     def parse_update(self, update):
-        chat = Chat(update['message']['chat'], self)
-        sender = User(update['message']['from']['id'], update['message']['from']['first_name'])
-        date = datetime.fromtimestamp(int(update['message']['date']))
-        message = Message(update['message']['message_id'], chat, date, update['message']['text'], sender)
+        try:
+            message = parse_message(update['message'], self)
+        except KeyError as e:
+            message = parse_message(update['edited_message'], self)
         return message
 
     def divide_command(self, text_split, message, chat, shared):
-        command_name = ''
+        command_name = text_split[0]
         if '@' in text_split[0]:  # if /command@botName
             command_name = text_split[0].split('@')[0]
-        else:
-            command_name = text_split[0]
         try:
-            i = inspect.getfullargspec(self.commands[command_name]).args
+            parameters = self.commands[command_name].param
         except KeyError:
             command_not_found(chat, command_name)
             return
         arguments = text_split[1:]
         arg = []
-        for j in i:
+        for j in parameters:
             if j == 'chat':
                 arg.append(chat)
             elif j == 'bot':
@@ -172,4 +180,4 @@ class Bot:
             elif j == 'shared':
                 arg.append(shared)
         args = tuple(arg)
-        self.commands[command_name](*args)
+        self.commands[command_name].func(*args)
