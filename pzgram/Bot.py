@@ -130,11 +130,18 @@ class Bot:
                 if message.edited and not self.allow_edited_message:
                     continue
                 chat = message.chat
+                arguments = []
+                if message.type == 'command':
+                    arguments = message.text.split[1:]
                 if self.before_division:
-                    self.useful_function['before_division'].func(message)  # TODO: check parameter, also dopo
+                    args = create_parameters_tuple(self.useful_function['before_division'].param,
+                                                   self, chat, message, arguments, shared)
+                    self.useful_function['before_division'].func(*args)
                 if message.type == 'command':
                     self.divide_command(message, chat, shared)
                 if self.after_division:
+                    args = create_parameters_tuple(self.useful_function['after_division'].param,
+                                                   self, chat, message, arguments, shared)
                     self.useful_function['after_division'].func()
         except KeyboardInterrupt:
             pass
@@ -179,17 +186,5 @@ class Bot:
             command_not_found(chat, command_name)
             return
         arguments = text_split[1:]
-        arg = []
-        for j in parameters:
-            if j == 'chat':
-                arg.append(chat)
-            elif j == 'bot':
-                arg.append(self)
-            elif j == 'message':
-                arg.append(message)
-            elif j == 'args':
-                arg.append(arguments)
-            elif j == 'shared':
-                arg.append(shared)
-        args = tuple(arg)
+        args = create_parameters_tuple(parameters, self, chat, message, arguments, shared)
         self.commands[command_name].func(*args)

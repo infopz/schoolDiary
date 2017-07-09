@@ -174,4 +174,17 @@ def parse_message(message_dict, bot):
         return Message(id, chat, date, True, **to_pass)
     return Message(id, chat, date, False, **to_pass)
 
-
+def create_parameters_tuple(parameters, bot, chat, message, arguments, shared):
+    arg = []
+    for j in parameters:
+        if j == 'chat':
+            arg.append(chat)
+        elif j == 'bot':
+            arg.append(bot)
+        elif j == 'message':
+            arg.append(message)
+        elif j == 'args':
+            arg.append(arguments)
+        elif j == 'shared':
+            arg.append(shared)
+    return tuple(arg)
