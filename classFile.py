@@ -1,6 +1,6 @@
 from datetime import datetime
 
-import ExceptionFile
+import pzgram.ExceptionFile
 
 
 class Diario:

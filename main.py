@@ -2,10 +2,10 @@ import time
 from classFile import *
 
 import apiKey
-import telegram
+import pzgram
 
 
-bot = telegram.Bot(apiKey.apiBot)
+bot = pzgram.Bot(apiKey.apiBot)
 
 
 def new_verifica(message, chat, shared, args):  # per ora /newverifica nGiorno nMese materia other
@@ -18,9 +18,10 @@ def new_verifica(message, chat, shared, args):  # per ora /newverifica nGiorno n
 
 
 def viewcalendar(chat, shared):
-    d = shared['diario']
+    '''d = shared['diario']
     print(d)
-    chat.send("Ecco gli impegni in programma:\n"+d.view_all())
+    chat.send("Ecco gli impegni in programma:\n"+d.view_all())'''
+    bot.download_file('AgADBAADHqoxG2uSEFP7OfFUyqiznKkZvRkABMQENej3nDOJuQQDAAEC', 'tryPhoto.jpg')
 
 
 def start_action(shared):  # setting function
@@ -37,10 +38,11 @@ def timers():  # funcion for all timers
         s = "Ehi, domani hai queste"'''
 
 
-def tryFunc():
-    print("cvrcweaedw")
+def tryFunc(message):
+    if message.type == 'photo':
+        message.photo.save('/Users/infopz/Desktop/')
 
 
 bot.set_commands({'/newverifica': new_verifica, '/calendar': viewcalendar})
-bot.set_function({'start_action': start_action})
+bot.set_function({'start_action': start_action, 'before_division': tryFunc})
 bot.run()
