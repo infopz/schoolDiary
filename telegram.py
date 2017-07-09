@@ -103,12 +103,12 @@ class Bot:
             self.start_date = datetime.now()
             if self.start_action:
                 arg = []
-                for i in self.useful_function['start_action']:
+                for i in self.useful_function['start_action'].param:
                     if i == 'bot':
                         arg.append(self)
                     elif i == 'shared':
                         arg.append(shared)
-                self.useful_function['start_action'].func(*tuple(arg))  # TODO: same thing
+                self.useful_function['start_action'].func(*tuple(arg))
             print('Bot Started')
             while True:
                 update = self.get_update()
@@ -120,9 +120,8 @@ class Bot:
                 chat = message.chat
                 if self.before_division:
                     self.useful_function['before_division'].func()  # TODO: check parameter, also dopo
-                text_split = message.text.split()
-                if text_split[0].startswith('/'):
-                    self.divide_command(text_split, message, chat, shared)
+                if message.type == 'command':
+                    self.divide_command(message, chat, shared)
                 if self.after_division:
                     self.useful_function['after_division'].func()
         except KeyboardInterrupt:
@@ -157,7 +156,8 @@ class Bot:
             message = parse_message(update['edited_message'], self)
         return message
 
-    def divide_command(self, text_split, message, chat, shared):
+    def divide_command(self, message, chat, shared):
+        text_split = message.text.split()
         command_name = text_split[0]
         if '@' in text_split[0]:  # if /command@botName
             command_name = text_split[0].split('@')[0]

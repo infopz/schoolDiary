@@ -1,6 +1,8 @@
 from datetime import datetime
 import inspect
-# TODO: create class Command
+
+message_possible_type = ['text', 'audio', 'document', 'game', 'photo', 'sticker', 'video', 'voice', 'video_note',
+                         'contact', 'location', 'venue']
 
 
 class Command:
@@ -29,6 +31,7 @@ class Command:
     def call_f(self):
         self.func(self.args)
 
+
 class Function:
 
     def __init__(self, func):
@@ -41,6 +44,7 @@ class Function:
 
     def call_f(self):
         exec(self.exec)
+
 
 class Chat:
 
@@ -73,6 +77,11 @@ class Message:
         self.edited = edited
         for k, v in kwargs.items():
             exec('self.'+k + '=v')
+        for i in message_possible_type:  # set the type of this message
+            if i in kwargs:
+                self.type = i
+        if self.type == 'text' and self.text.startswith('/'):
+            self.type = 'command'
 
     def reply(self, text):
         self.chat.send(text, reply=self.id)
@@ -104,17 +113,11 @@ def parse_user(user_dict):
 
 
 def parse_message(message_dict, bot):
-    # message parameter
-    # forwarded from chat, user, message, date
-    # reply message id
-    # edit date
-    # Type: Text, altra roba
     chat = parse_chat(message_dict['chat'], bot)
     date = datetime.fromtimestamp(int(message_dict['date']))
     id = message_dict['message_id']
     parameter = ['from', 'forward_from', 'forward_from_chat', 'forward_from_message_id', 'forward_date',
-                 'reply_to_message', 'edit_date']
-    type = ['text']
+                 'reply_to_message', 'edit_date', 'caption']  # FIXME: put caption in photo/video class
     to_pass = {}
     for i in parameter:
         if i in message_dict:
@@ -135,11 +138,11 @@ def parse_message(message_dict, bot):
             elif i == parameter[5]:
                 m = parse_message(message_dict[i], bot)
                 to_pass[i] = m
-    for i in type:
+    for i in message_possible_type:
         if i in message_dict:
-            if i == 'text':
-                to_pass[i] = message_dict[i]
-            # TODO: insert other type of message
+            to_pass[i] = message_dict[i]
+            break
+            # TODO: manage other type
     if 'edit_date' in to_pass:
         return Message(id, chat, date, True, **to_pass)
     return Message(id, chat, date, False, **to_pass)

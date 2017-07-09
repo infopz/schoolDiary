@@ -7,6 +7,7 @@ import telegram
 
 bot = telegram.Bot(apiKey.apiBot)
 
+
 def new_verifica(message, chat, shared, args):  # per ora /newverifica nGiorno nMese materia other
     d = shared['diario']
     data = create_data(args[0], args[1])
@@ -34,6 +35,7 @@ def timers():  # funcion for all timers
         return
     if time.strftime('%H') == '14':
         s = "Ehi, domani hai queste"'''
+
 
 def tryFunc():
     print("cvrcweaedw")
