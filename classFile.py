@@ -1,87 +1,87 @@
 from datetime import datetime
 
-import pzgram.ExceptionFile
+import pzgram.ExceptionFile as ExceptionFile
 
 
-class Diario:
+class Diary:
 
     def __init__(self):
-        self.giorni = {}
-        self.materie = {}
+        self.days = {}
+        self.subjects = {}
 
-    def add_verifica(self, data, materia, arg):  # per ora /newverifica nGiorno nMese materia other
-        newverifica = Verifica(data, materia, arg)
-        if data in self.giorni.keys():
-            self.giorni[data].append(newverifica)
+    def add_test(self, data, subject, arg):  # now /newverifica nDay nMonth subject other
+        newtest = Test(data, subject, arg)
+        if data in self.days.keys():
+            self.days[data].append(newtest)
         else:
-            self.giorni[data] = [newverifica]
-        print(len(self.giorni))
+            self.days[data] = [newtest]
 
     def view_all(self):
         s = ''
-        for i in self.giorni:
-            for j in self.giorni[i]:
+        for i in self.days:
+            for j in self.days[i]:
                 s += str(j)
         return s
 
     def __str__(self):
-        return str(len(self.giorni))
+        return str(len(self.days))
 
 
-class Verifica:
+class Test:
 
-    def __init__(self, data, materia, argomenti, note=""):
-        self.materia = materia
+    def __init__(self, data, subject, arguments, notes=""):
+        self.subject = subject
         self.data = data
-        self.arg = argomenti
-        self.note = note
+        self.arg = arguments
+        self.notes = notes
 
     def __str__(self):
-        return self.data.strftime("%d/%m") + ' Verifica di ' + self.materia + '\n'  #  FIXME: da cambiare quando faccio materia
+        return self.data.strftime("%d/%m") + ' ' + self.subject.capitalize() + ' test\n'
+        # FIXME: To change when i create the subject class
 
 
-class Materia:
+class Subject:
 
-    def __init__(self, nome, abbreviazione=""):
-        self.nome = nome
-        if abbreviazione == "":
-            abbreviazione = nome[0:3]
-        self.short = abbreviazione
-        self.voti = []
+    def __init__(self, name, abbreviation=""):
+        self.nome = name
+        if abbreviation == "":
+            abbreviation = name[0:3]
+        self.short = abbreviation
+        self.grades = []
 
     def __str__(self):
         s = ""
-        for i in self.voti:
-            s += i.data.strftime("%d/%m") + ' ' + str(i.numero) + '\n'
+        for i in self.grades:
+            s += i.data.strftime("%d/%m") + ' ' + str(i.number) + '\n'
         return s
 
 
-class Voto:
+class Grade:
 
-    def __init__(self, voto, data, tipo="Scritto"):  # Tipo: Scritto, Orale o Pratico
-        self.numero = voto
+    def __init__(self, grade, data, type="written"):  # Type: Written, Oral, Practical
+        self.numero = grade
         self.data = data
-        self.tipo = tipo
+        self.tipo = type
 
 
-class Compito:
+class Homework:
 
-    def __init__(self, data, materia, note):
+    def __init__(self, data, subject, notes):
         self.data = data
-        self.materia = materia
-        self.note = note
-        self.completato = False
+        self.subject = subject
+        self.note = notes
+        self.finished = False
 
     def modify_status(self):
-        self.completato = not self.completato
+        self.finished = not self.finished
 
 
 def create_data(day, month):
     try:
         month = int(month)
         year = 2018
-        if month >= 7:  #check per cambio anno
-            year -= 1
+        if month >= 7:  #check for changinf year
+            year = 2017
         year = str(year)
         month = str(month)
         if len(month) == 1:
