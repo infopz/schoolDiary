@@ -1,6 +1,5 @@
 import requests
 import time
-from datetime import datetime
 from multiprocessing import Process, Manager
 
 from .ExceptionFile import *
@@ -132,7 +131,7 @@ class Bot:
                 chat = message.chat
                 arguments = []
                 if message.type == 'command':
-                    arguments = message.text.split[1:]
+                    arguments = message.text.split()[1:]
                 if self.before_division:
                     args = create_parameters_tuple(self.useful_function['before_division'].param,
                                                    self, chat, message, arguments, shared)

@@ -3,6 +3,11 @@ import inspect
 
 message_possible_type = ['text', 'audio', 'document', 'game', 'photo', 'sticker', 'video', 'voice', 'video_note',
                          'contact', 'location', 'venue']
+message_all_attributes = ['text', 'audio', 'document', 'game', 'photo', 'sticker', 'video', 'voice', 'video_note',
+                          'contact', 'location', 'venue', 'sender', 'forward_from', 'forward_from_chat',
+                          'forward_from_message_id', 'forward_date', 'reply_to_message', 'edit_date']
+chat_all_attributes = ['title', 'username', 'first_name', 'last_name', 'photo']
+user_all_attributes = ['last_name', 'username', 'language_code']
 
 
 class Command:
@@ -53,6 +58,9 @@ class Chat:
         self.bot = bot
         for k, v in kwargs.items():
             exec('self.'+k + '=v')
+        for i in chat_all_attributes:
+            if not hasattr(self, i):
+                exec('self.'+i+'=None')
 
     def send(self, text, parse_mode="Markdown", disable_preview=False, disable_notification=False,
              reply=None, reply_markup=None):
@@ -82,6 +90,10 @@ class Message:
                 self.type = i
         if self.type == 'text' and self.text.startswith('/'):
             self.type = 'command'
+        for i in message_all_attributes:
+            if not hasattr(self, i):
+                exec('self.'+i+'=None')
+                pass
 
     def reply(self, text):
         self.chat.send(text, reply=self.id)
@@ -94,17 +106,21 @@ class User:
         self.first_name = first_name
         for k, v in kwargs.items():
             exec('self.'+k + '=v')
+        for i in user_all_attributes:
+            if not hasattr(self, i):
+                exec('self.'+i+'=None')
 
 
 class Photo:
 
-    def __init__(self, bot, id, width, height, file_size=None, other_size=None):
+    def __init__(self, bot, id, width, height, file_size=None, other_size=None, caption=None):
         self.bot = bot
         self.file_id = id
         self.width = width
         self.height = height
         self.file_size = file_size
         self.other_size = other_size
+        self.text = caption
 
     def save(self, path=''):
         get_file = self.bot.api_request('getFile', {'file_id': self.file_id})
@@ -133,7 +149,7 @@ def parse_message(message_dict, bot):
     date = datetime.fromtimestamp(int(message_dict['date']))
     id = message_dict['message_id']
     parameter = ['from', 'forward_from', 'forward_from_chat', 'forward_from_message_id', 'forward_date',
-                 'reply_to_message', 'edit_date', 'caption']  # FIXME: put caption in photo/video class
+                 'reply_to_message', 'edit_date']
     to_pass = {}
     for i in parameter:
         if i in message_dict:
@@ -159,12 +175,15 @@ def parse_message(message_dict, bot):
             if i == 'text':
                 to_pass[i] = message_dict[i]
             elif i == 'photo':
+                text = None
+                if 'caption' in message_dict:
+                    text = message_dict['caption']
                 aviable_size = []
                 for p in message_dict['photo']:
                     if 'file_size' in p:
-                        aviable_size.append(Photo(bot, p['file_id'], p['width'], p['height'], p['file_size']))
+                        aviable_size.append(Photo(bot, p['file_id'], p['width'], p['height'], p['file_size'], text))
                     else:
-                        aviable_size.append(Photo(bot, p['file_id'], p['width'], p['height']))
+                        aviable_size.append(Photo(bot, p['file_id'], p['width'], p['height'], caption=text))
                 biggest_photo = aviable_size[-1]
                 del aviable_size[-1]
                 biggest_photo.other_size = aviable_size
