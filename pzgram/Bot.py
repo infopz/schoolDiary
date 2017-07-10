@@ -53,7 +53,7 @@ class Bot:
         except Exception as e:
             print('Request error - '+str(e))
             raise RequestError(str(e))
-        if data.status_code == 200:  # 409 -> Other istance 404 -> Something not found
+        if data.status_code == 200:  # 409 -> Other istance 404 -> Something not found 400 -> Bad request
             data = data.json()
             return data
         else:
@@ -138,10 +138,11 @@ class Bot:
                     self.useful_function['before_division'].func(*args)
                 if message.type == 'command':
                     self.divide_command(message, chat, shared)
+                    continue  # Step Over the after_division
                 if self.after_division:
                     args = create_parameters_tuple(self.useful_function['after_division'].param,
                                                    self, chat, message, arguments, shared)
-                    self.useful_function['after_division'].func()
+                    self.useful_function['after_division'].func(*args)
         except KeyboardInterrupt:
             pass
 

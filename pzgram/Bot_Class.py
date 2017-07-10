@@ -1,5 +1,6 @@
 from datetime import datetime
 import inspect
+import json
 
 message_possible_type = ['text', 'audio', 'document', 'game', 'photo', 'sticker', 'video', 'voice', 'video_note',
                          'contact', 'location', 'venue']
@@ -193,6 +194,7 @@ def parse_message(message_dict, bot):
         return Message(id, chat, date, True, **to_pass)
     return Message(id, chat, date, False, **to_pass)
 
+
 def create_parameters_tuple(parameters, bot, chat, message, arguments, shared):
     arg = []
     for j in parameters:
@@ -207,3 +209,9 @@ def create_parameters_tuple(parameters, bot, chat, message, arguments, shared):
         elif j == 'shared':
             arg.append(shared)
     return tuple(arg)
+
+
+def create_keyboard(button, one=False, res=True):
+    keyb = {"keyboard": button, "one_time_keyboard": False, "resize_keyboard": True}
+    keyb = json.dumps(keyb)
+    return keyb

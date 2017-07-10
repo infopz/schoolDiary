@@ -7,14 +7,14 @@ class Diary:
 
     def __init__(self):
         self.days = {}
-        self.subjects = {}
+        self.subjects = []
 
-    def add_test(self, data, subject, arg):  # now /newverifica nDay nMonth subject other
-        newtest = Test(data, subject, arg)
-        if data in self.days.keys():
-            self.days[data].append(newtest)
+    def add_test(self, date, subject, arg, notes=""):
+        newtest = Test(date, subject, arg, notes)
+        if date in self.days.keys():
+            self.days[date].append(newtest)
         else:
-            self.days[data] = [newtest]
+            self.days[date] = [newtest]
 
     def view_all(self):
         s = ''
@@ -29,45 +29,46 @@ class Diary:
 
 class Test:
 
-    def __init__(self, data, subject, arguments, notes=""):
+    def __init__(self, date, subject, arguments, notes=""):
         self.subject = subject
-        self.data = data
+        self.date = date
         self.arg = arguments
         self.notes = notes
 
     def __str__(self):
-        return self.data.strftime("%d/%m") + ' ' + self.subject.capitalize() + ' test\n'
-        # FIXME: To change when i create the subject class
+        return self.date.strftime("%d/%m") + ' ' + self.subject.capitalize() + ' test\n'
+        # FIXME: To change when I create the subject class
 
 
 class Subject:
 
     def __init__(self, name, abbreviation=""):
-        self.nome = name
+        self.name = name
         if abbreviation == "":
             abbreviation = name[0:3]
         self.short = abbreviation
+        self.emoji = ''
         self.grades = []
 
     def __str__(self):
         s = ""
         for i in self.grades:
-            s += i.data.strftime("%d/%m") + ' ' + str(i.number) + '\n'
+            s += i.date.strftime("%d/%m") + ' ' + str(i.number) + '\n'
         return s
 
 
 class Grade:
 
-    def __init__(self, grade, data, type="written"):  # Type: Written, Oral, Practical
+    def __init__(self, grade, date, type="written"):  # Type: Written, Oral, Practical
         self.numero = grade
-        self.data = data
-        self.tipo = type
+        self.date = date
+        self.type = type
 
 
 class Homework:
 
-    def __init__(self, data, subject, notes):
-        self.data = data
+    def __init__(self, date, subject, notes):
+        self.date = date
         self.subject = subject
         self.note = notes
         self.finished = False
@@ -76,15 +77,15 @@ class Homework:
         self.finished = not self.finished
 
 
-def create_data(day, month):
+def create_date(day, month):
     try:
         month = int(month)
         year = 2018
-        if month >= 7:  #check for changinf year
+        if month >= 7:  # check for changing year
             year = 2017
         year = str(year)
         month = str(month)
-        if len(month) == 1:
+        if len(month) == 1:  # trasform 5 in 05
             month = "0"+month
         day = str(day)
         if len(day) == 1:
