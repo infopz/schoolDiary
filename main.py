@@ -11,8 +11,9 @@ bot = pzgram.Bot(apiKey.apiBot)
 
 def new_test_1(chat, shared):  # select month
     shared['data_cache'] = {}  # reset cache
-    keyboard = pzgram.create_keyboard([['Jan', 'Feb', 'Mar', 'Apr'], ['May', 'Jun', 'Jul', 'Aug'],
-                                       ['Sep', 'Oct', 'Nov', 'Dec']], one=True)  # FIXME: give priority to current month
+    # keyboard = pzgram.create_keyboard([['Jan', 'Feb', 'Mar', 'Apr'], ['May', 'Jun', 'Jul', 'Aug'],
+    #                                    ['Sep', 'Oct', 'Nov', 'Dec']], one=True)  # FIXME: give priority to current month
+    keyboard = pzgram.create_keyboard(useful_function.create_hw_keyboard(), one=True)
     chat.send('Select a month:', reply_markup=keyboard)
     shared['status'] = 'newTest1'
 
@@ -20,7 +21,7 @@ def new_test_1(chat, shared):  # select month
 def new_test_2(message, chat, shared):  # select day
     days = [[], [], [], [], [], [], []]
     for i in range(1, 32):
-        days[(i-1)//5].append(str(i))
+        days[(i-1)//7].append(str(i))
     keyboard = pzgram.create_keyboard(days, one=True)
     month = useful_function.convert_month(message.text)
     if month != '':
@@ -92,30 +93,36 @@ def new_test_5(message, chat, shared):
 
 
 def new_homework(chat, shared):
-    shared['data_cache'] = {}
-    keyboard = pzgram.create_keyboard([['Jan', 'Feb', 'Mar', 'Apr'], ['May', 'Jun', 'Jul', 'Aug'],
-                                       ['Sep', 'Oct', 'Nov', 'Dec']], one=True)
+    key_list, conv_dict = useful_function.create_hw_keyboard()
+    #key_list = useful_function.create_month_keyboard(time.strftime('%m'))
+    keyboard = pzgram.create_keyboard(key_list, one=True)
     chat.send('Select a month:', reply_markup=keyboard)
+    shared['data_cache'] = {'conv_dict': conv_dict}
     shared['status'] = 'newHW1'
 
 
 def new_homework_2(message, chat, shared):
-    days = [[], [], [], [], [], [], []]
-    for i in range(1, 32):
-        days[(i - 1) // 5].append(str(i))
-    keyboard = pzgram.create_keyboard(days, one=True)
-    month = useful_function.convert_month(message.text)
-    if month != '':
-        cache = shared['data_cache']
-        cache['month'] = month
-        cache['day_keyb'] = keyboard
+    this_month = int(time.strftime('%m'))
+    cache = shared['data_cache']
+    conv_dict = cache['conv_dict']
+    if message.text in conv_dict:
+        cache['date'] = conv_dict[message.text]
+    elif message.text == 'This Month':
+        key_list, conv_dict = useful_function.create_month_keyboard(this_month)
+        cache['conv_dict'] = conv_dict
+        keyboard = pzgram.create_keyboard(key_list, one=True)
+        chat.send('Select a day', reply_markup=keyboard)
         shared['data_cache'] = cache
+    elif message.text == 'Next Month':
+        pass
+    elif message.text == 'Other':
+        pass
     else:
-        chat.send('The month that you gave me is not correct')
+        chat.send('The day that you give me is not correct')
         new_homework(chat, shared)
         return
-    chat.send('Now Select a day:', reply_markup=keyboard)
-    shared['status'] = 'newHW2'
+    #chat.send('Now Select a day:', reply_markup=keyboard)
+    #shared['status'] = 'newHW2'
 
 
 def new_homework_3(message, chat, shared):
@@ -182,8 +189,7 @@ def view_calendar(chat, shared):
 
 def allert_timer(bot):
     h = time.strftime('%H')
-    print(h)
-    if h == '15':
+    if h == '14':
         s = useful_function.check_tomorrow()
         if s != '':
             pzgram.Chat(20403805, bot).send(s)

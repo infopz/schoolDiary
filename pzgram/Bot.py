@@ -57,7 +57,8 @@ class Bot:
             data = data.json()
             return data
         else:
-            raise AnotherStatusError(data.status_code)
+            raise AnotherStatusError(str(data.status_code) + ' ' + data.text)
+            # TODO: categorize all type of status code
 
     def download_file(self, file_path, local_path=''):
         url = f'https://api.telegram.org/file/bot{self.botKey}/{file_path}'
