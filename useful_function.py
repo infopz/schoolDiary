@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+import SQL_function
 
 
 def convert_month(month):
@@ -34,7 +35,48 @@ def create_date(day, month):
     return day+month
 
 
-def subtract_days(date, n_days):
+def modify_days(date, n_days, operation):  # True -> Add, False -> Sub
     date_formatted = datetime.strptime(str(date) + '2018', "%d%m%Y")
-    date_new = date_formatted - timedelta(days=int(n_days))
-    return date_new.strftime('%d%m')
+    if operation:
+        date_new = date_formatted + timedelta(days=int(n_days))
+        return date_new.strftime('%d%m')
+    else:
+        date_new = date_formatted - timedelta(days=int(n_days))
+        return date_new.strftime('%d%m')
+
+
+def convert_test(test):
+    return test[1][0:2] + '/' + test[1][2:4] + ' ' + test[0] + ' test'
+
+
+def convert_homework(hw):
+    return hw[1][0:2] + '/' + hw[1][2:4] + ' ' + hw[0] + ' homework'
+
+
+def check_tomorrow():
+    date = datetime.now().strftime('%d%m')
+    tomorrow = modify_days(date, 1, True)
+    test, homeworks = SQL_function.find_commitments(tomorrow)
+    not_compl_homeworks = []
+    if len(homeworks) != 0:
+        for i in range(len(homeworks)):
+            if homeworks[i][2] == 0:
+                not_compl_homeworks.append(homeworks[i])
+    if len(test) == 0 and len(not_compl_homeworks) == 0:
+        return ''
+    s = ''
+    if len(test) != 0:
+        s += 'Ehi, you have a test tomorrow!\n'
+        for i in test:
+            if i[2] is not None:
+                s += '*'+i[0] + ' test*\n' + i[1] + ' - ' + i[2] + ' \n'
+            else:
+                s += '*' + i[0] + ' test*\n' + i[1] + '\n'
+    if len(not_compl_homeworks) != 0:
+        if s != '':
+            s += '\nAnd you also have homeworks:\n'
+        else:
+            s += 'Ehi, you have some homeworks for tomorrow!\n'
+        for h in not_compl_homeworks:
+            s += '*'+h[0] + ' homework*\n' + h[1] + '\n'
+    return s

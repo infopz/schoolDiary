@@ -162,8 +162,15 @@ class Bot:
 
     def manage_one_timer(self, delay, func, shared):
         try:
+            parameters = inspect.getfullargspec(func).args
             while True:
-                func()
+                arg = []
+                for j in parameters:
+                    if j == 'bot':
+                        arg.append(self)
+                    elif j == 'shared':
+                        arg.append(shared)
+                func(*tuple(arg))
                 time.sleep(delay)
         except KeyboardInterrupt:
             pass
