@@ -2,7 +2,7 @@ import pzgram
 import pickle
 import json
 
-from classFile import *
+from SQL_function import *
 import apiKey
 import useful_function
 
@@ -48,13 +48,11 @@ def new_test_3(message, chat, shared):  # select subject
         chat.send('Now Select a day:', reply_markup=cache['day_keyb'])
         shared['status'] = 'newTest2'
         return
-    try:
-        date = create_date(day, cache['month'])
-    except pzgram.DataCreationError:
+    if not useful_function.check_date(day, cache['month']):
         chat.send('Error while creating the date, retry')
         new_test_1(chat, shared)
         return
-    cache['date'] = date
+    cache['date'] = useful_function.create_date(day, cache['month'])
     subj = [[], [], []]
     for i in range(len(diary.subjects)):
         subj[i//3].append(diary.subjects[i].short)
@@ -133,7 +131,6 @@ def process_message(message, chat, shared):
 
 
 def start_action(shared):
-    shared['diary'] = Diary()
     shared['status'] = ''
     shared['data_cache'] = {}
     create_subject(shared)
