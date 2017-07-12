@@ -4,6 +4,7 @@ from multiprocessing import Process, Manager
 
 from .ExceptionFile import *
 from .Bot_Class import *
+from .api_file import api_request
 
 
 class Bot:
@@ -11,6 +12,7 @@ class Bot:
     def __init__(self, key):
         self.botKey = key
         self.offset = 0
+        self.started = False
         self.commands = {}
         self.useful_function = {}
         self.timers = {}
@@ -47,19 +49,6 @@ class Bot:
     def set_timers(self, timer_dict):
         self.timers = timer_dict
 
-    def api_request(self, method, p={}):
-        try:
-            data = requests.get(f"https://api.telegram.org/bot{self.botKey}/{method}", params=p)
-        except Exception as e:
-            print('Request error - '+str(e))
-            raise RequestError(str(e))
-        if data.status_code == 200:  # 409 -> Other istance 404 -> Something not found 400 -> Bad request
-            data = data.json()
-            return data
-        else:
-            raise AnotherStatusError(str(data.status_code) + ' ' + data.text)
-            # TODO: categorize all type of status code
-
     def download_file(self, file_path, local_path=''):
         url = f'https://api.telegram.org/file/bot{self.botKey}/{file_path}'
         local_filename = url.split('/')[-1]
@@ -76,12 +65,11 @@ class Bot:
         p = {'offset': self.offset, 'limit': 1, 'timeout': 1000}
         while True:
             try:
-                update = self.api_request('getUpdates', p)
-            except AnotherStatusError or RequestError as e:
-                if str(e) == '409':
-                    print('Another Instance Error, try again')
-                time.sleep(3)
+                update = api_request(self.botKey, 'getUpdates', p)
+            except ApiError:
                 continue
+            except StopBot:
+                raise KeyboardInterrupt
             if not update['ok']:
                 print('Error with the update, countinue')
                 continue
@@ -106,22 +94,15 @@ class Bot:
             for p in process:
                 p.join()
         except KeyboardInterrupt:
-            print("Shutting Down....")
+            print("Shutting Down...")
             for p in process:
                 p.terminate()
 
     def run_bot(self, shared):
         try:
-            self.start_date = datetime.now()
-            if self.start_action:
-                arg = []
-                for i in self.useful_function['start_action'].param:
-                    if i == 'bot':
-                        arg.append(self)
-                    elif i == 'shared':
-                        arg.append(shared)
-                self.useful_function['start_action'].func(*tuple(arg))
+            self.start_bot(shared)
             print('Bot Started')
+            self.started = True
             while True:
                 update = self.get_update()
                 message = self.parse_update(update)
@@ -147,7 +128,26 @@ class Bot:
         except KeyboardInterrupt:
             pass
 
+    def start_bot(self, shared):
+        while True:
+            try:
+                api_request(self.botKey, 'getMe')  # Check Api and Conncction
+                break
+            except ApiError:
+                time.sleep(0.2)
+        self.start_date = datetime.now()
+        if self.start_action:
+            arg = []
+            for i in self.useful_function['start_action'].param:
+                if i == 'bot':
+                    arg.append(self)
+                elif i == 'shared':
+                    arg.append(shared)
+            self.useful_function['start_action'].func(*tuple(arg))
+
     def run_timer(self, shared):
+        while not self.started:
+            time.sleep(0.5)
         timers = []
         for d in self.timers.keys():
             p = Process(target=self.manage_one_timer, args=(d, self.timers[d], shared))

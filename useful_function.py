@@ -134,3 +134,39 @@ def create_month_keyboard(month):
         conversion_dict[button] = day.strftime('%d%m')
     return keyboard, conversion_dict
 
+
+def create_this_month_keyboard():
+    month = int(datetime.now().strftime('%m'))
+    week_list = ['M', 'T', 'W', 'T', 'F', 'S', 'S']
+    keyboard = [[]]
+    conversion_dict = {}
+    month_length = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
+    row = 0
+    first_day = datetime.now()
+    for i in range(1, month_length[int(month) - 1] - int(first_day.strftime('%d'))):
+        day = first_day + timedelta(days=i - 1)
+        d_week = int(day.strftime('%u')) - 1
+        if d_week == 6:
+            if i != 1:
+                row += 1
+                keyboard.append([])
+            continue
+        d_week = week_list[int(day.strftime('%u')) - 1]
+        button = d_week + ' ' + day.strftime('%d')
+        keyboard[row].append(button)
+        conversion_dict[button] = day.strftime('%d%m')
+    return keyboard, conversion_dict
+
+
+def create_all_month_keyboard():
+    month = int(datetime.now().strftime('%m')) - 1
+    month_list = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+    keyboard = [[], [], []]
+    reset = 0
+    for i in range(12):
+        if month + i > 11:
+            keyboard[i//4].append(month_list[reset])
+            reset += 1
+        else:
+            keyboard[i//4].append(month_list[month + i])
+    return keyboard
