@@ -9,7 +9,7 @@ def api_request(key, method, p=None):
             data = requests.get(f"https://api.telegram.org/bot{key}/{method}", params=p)
         except Exception as e:
             print('Request error - ' + str(e))
-            raise ApiError
+            raise RequestError(str(e))
         status_code = data.status_code
         data = data.json()
         if status_code == 200:
@@ -32,16 +32,16 @@ def recognize_error(code, data):
         pass
     if code == 400:
         print('API_Request - BadRequest Error ' + error_description)
-        return 'continue', None
+        return 'continue'
     elif code == 401:
         print('API_Request - BotKey Error ' + error_description)
         return 'stop', 'API_Request - BotKey Error ' + error_description
     elif code == 403:
         print('API_Request - Privacy Error ' + error_description)
-        return 'continue', None
+        return 'continue'
     elif code == 404:
         print('API_Request - NotFound Error ' + error_description)
-        return 'continue', None
+        return 'continue'
     elif code == 409:
         print('API_Request - AnotherInstance Error - Retry in 3s')
         return 'retry', 3

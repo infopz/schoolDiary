@@ -2,6 +2,8 @@ from datetime import datetime
 import inspect
 import json
 
+from .api_file import api_request
+
 message_possible_type = ['text', 'audio', 'document', 'game', 'photo', 'sticker', 'video', 'voice', 'video_note',
                          'contact', 'location', 'venue']
 message_all_attributes = ['text', 'audio', 'document', 'game', 'photo', 'sticker', 'video', 'voice', 'video_note',
@@ -74,7 +76,7 @@ class Chat:
             'reply_to_message_id': reply,
             'reply_markup': reply_markup
         }
-        self.bot.api_request('sendMessage', parameter)
+        api_request(self.bot.botKey, 'sendMessage', parameter)
 
 
 class Message:
@@ -124,7 +126,7 @@ class Photo:
         self.text = caption
 
     def save(self, path=''):
-        get_file = self.bot.api_request('getFile', {'file_id': self.file_id})
+        get_file = api_request(self.bot.botKey, 'getFile', {'file_id': self.file_id})
         if get_file['ok']:
             self.bot.download_file(get_file['result']['file_path'], path)
 
@@ -215,3 +217,17 @@ def create_keyboard(button, one=False, res=True):
     keyb = {"keyboard": button, "one_time_keyboard": False, "resize_keyboard": True}
     keyb = json.dumps(keyb)
     return keyb
+
+
+def default_start(chat, message, commands):
+    possible_commands = ''
+    for c in commands:
+        possible_commands += commands[c].name + '\n'
+    chat.send('Hi, '+message.sender.first_name+"\nhere's the list of possible commands:\n"+possible_commands)
+
+
+def default_help(chat, commands):
+    possible_commands = ''
+    for c in commands:
+        possible_commands += commands[c].name + '\n'
+    chat.send("Here's the list of possible commands:\n" + possible_commands)

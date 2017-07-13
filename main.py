@@ -128,6 +128,7 @@ def new_homework_2(message, chat, shared):
         new_homework(chat, shared)
     shared['data_cache'] = cache
 
+
 def new_homework_3(message, chat, shared):
     cache = shared['data_cache']
     subjects = shared['subjects']

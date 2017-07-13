@@ -88,6 +88,7 @@ class Bot:
         if len(self.timers) != 0:
             p2 = Process(target=self.run_timer, args=(shared,))
             process.append(p2)
+        self.start_bot(shared)
         for p in process:
             p.start()
         try:
@@ -100,7 +101,6 @@ class Bot:
 
     def run_bot(self, shared):
         try:
-            self.start_bot(shared)
             print('Bot Started')
             self.started = True
             while True:
@@ -135,7 +135,7 @@ class Bot:
                 break
             except ApiError:
                 time.sleep(0.2)
-        self.start_date = datetime.now()
+        self.start_date = datetime.now()  # FIXME: check pc time
         if self.start_action:
             arg = []
             for i in self.useful_function['start_action'].param:
@@ -146,8 +146,6 @@ class Bot:
             self.useful_function['start_action'].func(*tuple(arg))
 
     def run_timer(self, shared):
-        while not self.started:
-            time.sleep(0.5)
         timers = []
         for d in self.timers.keys():
             p = Process(target=self.manage_one_timer, args=(d, self.timers[d], shared))
@@ -188,6 +186,13 @@ class Bot:
         command_name = text_split[0]
         if '@' in text_split[0]:  # if /command@botName
             command_name = text_split[0].split('@')[0]
+        if command_name == '/start' or command_name == '/help':
+            if command_name == '/start' and not self.start_command:
+                default_start(chat, message, self.commands)
+                return
+            if command_name == '/help' and not self.help_command:
+                default_help(chat, self.commands)
+                return
         try:
             parameters = self.commands[command_name].param
         except KeyError:
