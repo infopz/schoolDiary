@@ -26,7 +26,7 @@ def add_new_homework(subj, date, notes):
         cur.execute(f"INSERT INTO Homework VALUES ('{subj}', '{date}', '{notes}', 0)")
 
 
-def find_commitments(date):
+def find_one_day(date):
     con = sqlite3.connect('diary.db')
     with con:
         cur = con.cursor()

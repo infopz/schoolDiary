@@ -9,6 +9,13 @@ import useful_function
 bot = pzgram.Bot(apiKey.apiBot)
 
 
+def start_command(chat, message, shared):
+    chat.send('Hi, *'+message.sender.first_name+'*\n'
+              'Welcome to schoolDiaryBot, \nUse the keyboard to view all the possible commands\n'
+              'This is an [open-source bot](https://github.com/infopz/pzGram_schoolDiary) by @infopz',
+              disable_preview=True, reply_markup=shared['keyboards']['default'])
+
+
 def new_test(chat, shared):
     chat.send('Select a date:', reply_markup=shared['keyboards']['this_m_test'])
     shared['data_cache'] = {'conv_dict': shared['keyboards']['this_m_c']}
@@ -93,6 +100,10 @@ def manage_args_notes(message, chat, shared):
 
 
 def view_calendar(chat, args):
+    if len(args) != 1:
+        return  # chat send
+    today = datetime.now().strftime('%m%d')
+    tomorrow = useful_function.modify_days(today, 1)
     if args[0] == 'all':
         s = ''
         tests, homeworks = SQL_function.find_all()
@@ -103,14 +114,27 @@ def view_calendar(chat, args):
         chat.send("Here's yours commitments:\n"+s)
     if args[0] == 'week':
         s = ''
-        start = datetime.now().strftime('%m%d')
-        stop = useful_function.modify_days(start, 7)
-        tests, homeworks = SQL_function.find_between(start, stop)
+        stop = useful_function.modify_days(tomorrow, 7)
+        tests, homeworks = SQL_function.find_between(tomorrow, stop)
         for t in tests:
             s += useful_function.convert_test(t) + '\n'
         for hw in homeworks:
             s += useful_function.convert_homework(hw) + '\n'
         chat.send("Here's yours commitments in a week:\n"+s)
+    if args[0] == 'tomorrow':
+        s = ''
+        tests, homeworks = SQL_function.find_one_day(tomorrow)
+        if len(tests):
+            s += 'Test:\n'
+            for t in tests:
+                if t[2] is not None:
+                    s += '*' + t[0] + ' test*\n' + t[1] + ' - ' + t[2] + ' \n'
+                else:
+                    s += '*' + t[0] + ' test*\n' + t[1] + '\n'
+        if len(homeworks):
+            for h in homeworks:
+                s += '*' + h[0] + ' homework*\n' + h[1] + '\n'
+        chat.send(s)
 
 
 def allert_timer(bot):
@@ -123,6 +147,7 @@ def allert_timer(bot):
 
 def set_keyboard(shared):
     month = int(datetime.now().strftime('%m'))
+    default_keyboard = pzgram.create_keyboard([['View'], ['New Test', 'New Homework']])
     days_l, days_c = useful_function.create_hw_keyboard()
     this_m_l, this_m_c = useful_function.create_this_month_keyboard()
     next_m_l, next_m_c = useful_function.create_month_keyboard(month+1)
@@ -139,11 +164,17 @@ def set_keyboard(shared):
     subj = pzgram.create_keyboard(subj, one=False)
     shared['keyboards'] = {'days': days, 'this_m': this_m, 'next_m': next_m, 'all_month': all_month,
                            'this_m_test': this_m_test, 'days_c': days_c, 'this_m_c': this_m_c,
-                           'next_m_c': next_m_c, 'subj': subj}
+                           'next_m_c': next_m_c, 'subj': subj, 'default': default_keyboard}
 
 
-def process_message(message, chat, shared):
-    if shared['status'] == 'newHW' or shared['status'] == 'newTest':
+def process_message(message, chat, shared, args):
+    if message.text == 'View':
+        view_calendar(chat, args)
+    elif message.text == 'New Test':
+        new_test(chat, shared)
+    elif message.text == 'New Homework':
+        new_homework(chat, shared)
+    elif shared['status'] == 'newHW' or shared['status'] == 'newTest':
         manage_date(message, chat, shared)
     elif shared['status'] == 'newHW2' or shared['status'] == 'newTest2':
         manage_subject(message, chat, shared)
@@ -157,7 +188,8 @@ def start_action(shared):
     shared['subjects'] = {'Math': 'Math', 'Italian': 'Ita', 'English': 'Eng', 'Systems': 'Sys', 'TPS': 'TPS',
                           'History': 'Hist', 'Gymnastic': 'Gym', 'Telecommunications': 'Tele'}
 
-bot.set_commands({'/newtest': new_test, '/view': view_calendar, '/newhw': new_homework})  # FIXME:Change with keyboard
+bot.set_commands({'/newtest': new_test, '/view': view_calendar, '/newhw': new_homework, '/start': start_command})
+# FIXME:Change with keyboard
 bot.set_function({'start_action': start_action, 'after_division': process_message})
 bot.set_timers({7200: allert_timer, 43200: set_keyboard})
 bot.run()

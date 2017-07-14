@@ -11,20 +11,6 @@ def convert_month(month):
         return ''
 
 
-def check_date(day, month):
-    try:
-        month = str(month)
-        if len(month) == 1:  # trasform 5 in 05
-            month = "0" + month
-        day = str(day)
-        if len(day) == 1:
-            day = "0" + day
-        datetime.strptime(day + month + '2017', "%d%m%Y")  # check for leap year (2017/2018 aren't a leap years)
-        return True  # if no error
-    except:
-        return False
-
-
 def create_date(day, month):
     month = str(month)
     if len(month) == 1:  # trasform 5 in 05
@@ -56,7 +42,7 @@ def convert_homework(hw):
 def check_tomorrow():
     date = datetime.now().strftime('%m%d')
     tomorrow = modify_days(date, 1)
-    test, homeworks = SQL_function.find_commitments(tomorrow)
+    test, homeworks = SQL_function.find_one_day(tomorrow)
     not_compl_homeworks = []
     if len(homeworks) != 0:
         for i in range(len(homeworks)):
@@ -78,7 +64,7 @@ def check_tomorrow():
         else:
             s += 'Ehi, you have some homeworks for tomorrow!\n'
         for h in not_compl_homeworks:
-            s += '*'+h[0] + ' homework*\n' + h[1] + '\n'
+            s += '*' + h[0] + ' homework*\n' + h[1] + '\n'
     return s
 
 
@@ -87,7 +73,7 @@ def create_hw_keyboard():
     correspond_dict = {}
     keyboard = list()
     now = datetime.now()
-    now_date = now.strftime('%d%m')
+    now_date = now.strftime('%m%d')
     keyboard.append(['Tomorrow'])
     correspond_dict['Tomorrow'] = modify_days(now_date, 1)
     effective_increment = 2
