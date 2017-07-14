@@ -13,7 +13,7 @@ def start_command(chat, message, shared):
     chat.send('Hi, *'+message.sender.first_name+'*\n'
               'Welcome to schoolDiaryBot, \nUse the keyboard to view all the possible commands\n'
               'This is an [open-source bot](https://github.com/infopz/pzGram_schoolDiary) by @infopz',
-              disable_preview=True, reply_markup=shared['keyboards']['default'])
+              disable_preview=True)
 
 
 def new_test(chat, shared):
@@ -147,7 +147,6 @@ def allert_timer(bot):
 
 def set_keyboard(shared):
     month = int(datetime.now().strftime('%m'))
-    default_keyboard = pzgram.create_keyboard([['View'], ['New Test', 'New Homework']])
     days_l, days_c = useful_function.create_hw_keyboard()
     this_m_l, this_m_c = useful_function.create_this_month_keyboard()
     next_m_l, next_m_c = useful_function.create_month_keyboard(month+1)
@@ -164,7 +163,7 @@ def set_keyboard(shared):
     subj = pzgram.create_keyboard(subj, one=False)
     shared['keyboards'] = {'days': days, 'this_m': this_m, 'next_m': next_m, 'all_month': all_month,
                            'this_m_test': this_m_test, 'days_c': days_c, 'this_m_c': this_m_c,
-                           'next_m_c': next_m_c, 'subj': subj, 'default': default_keyboard}
+                           'next_m_c': next_m_c, 'subj': subj}
 
 
 def process_message(message, chat, shared, args):
@@ -192,4 +191,5 @@ bot.set_commands({'/newtest': new_test, '/view': view_calendar, '/newhw': new_ho
 # FIXME:Change with keyboard
 bot.set_function({'start_action': start_action, 'after_division': process_message})
 bot.set_timers({7200: allert_timer, 43200: set_keyboard})
+bot.set_keyboard([['View'], ['New Test', 'New Homework']])
 bot.run()

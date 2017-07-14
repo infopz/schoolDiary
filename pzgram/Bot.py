@@ -24,6 +24,7 @@ class Bot:
         self.start_command = False
         self.before_division = False
         self.after_division = False
+        self.default_keyboard = None
         print("Bot Created")
 
     def set_commands(self, command_dict):
@@ -194,3 +195,6 @@ class Bot:
         arguments = text_split[1:]
         args = create_parameters_tuple(parameters, self, chat, message, arguments, shared)
         self.commands[command_name].func(*args)
+
+    def set_keyboard(self, buttons, resize=True):
+        self.default_keyboard = create_keyboard(buttons, res=resize)

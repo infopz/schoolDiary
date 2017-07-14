@@ -67,6 +67,8 @@ class Chat:
 
     def send(self, text, parse_mode="Markdown", disable_preview=False, disable_notification=False,
              reply=None, reply_markup=None):
+        if reply_markup is None:
+            reply_markup = self.bot.default_keyboard
         parameter = {
             'text': text,
             'chat_id': self.id,
@@ -98,7 +100,7 @@ class Message:
                 exec('self.'+i+'=None')
                 pass
 
-    def reply(self, text):
+    def reply(self, text):  # FIXME, add all the options for chat.send
         self.chat.send(text, reply=self.id)
 
 
