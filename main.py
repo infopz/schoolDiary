@@ -9,96 +9,19 @@ import useful_function
 bot = pzgram.Bot(apiKey.apiBot)
 
 
-def new_test_1(chat, shared):  # select month
-    shared['data_cache'] = {}  # reset cache
-    # keyboard = pzgram.create_keyboard([['Jan', 'Feb', 'Mar', 'Apr'], ['May', 'Jun', 'Jul', 'Aug'],
-    #                                    ['Sep', 'Oct', 'Nov', 'Dec']], one=True)  # FIXME: give priority to current month
-    keyboard = pzgram.create_keyboard(useful_function.create_hw_keyboard(), one=True)
-    chat.send('Select a month:', reply_markup=keyboard)
-    shared['status'] = 'newTest1'
-
-
-def new_test_2(message, chat, shared):  # select day
-    days = [[], [], [], [], [], [], []]
-    for i in range(1, 32):
-        days[(i-1)//7].append(str(i))
-    keyboard = pzgram.create_keyboard(days, one=True)
-    month = useful_function.convert_month(message.text)
-    if month != '':
-        cache = shared['data_cache']
-        cache['month'] = month
-        cache['day_keyb'] = keyboard
-        shared['data_cache'] = cache
-    else:
-        chat.send('The month that you gave me is not correct')
-        new_test_1(chat, shared)
-        return
-    chat.send('Now Select a day:', reply_markup=keyboard)
-    shared['status'] = 'newTest2'
-
-
-def new_test_3(message, chat, shared):  # select subject
-    cache = shared['data_cache']
-    subjects = shared['subjects']
-    day = message.text
-    if int(day) in range(1, 32):  # manage with try
-        cache['day'] = day
-    else:
-        chat.send('The day that you gave me is not correct')
-        chat.send('Now Select a day:', reply_markup=cache['day_keyb'])
-        shared['status'] = 'newTest2'
-        return
-    if not useful_function.check_date(day, cache['month']):
-        chat.send('Error while creating the date, retry')
-        new_test_1(chat, shared)
-        return
-    cache['date'] = useful_function.create_date(day, cache['month'])
-    subj = [[], [], []]
-    c = 0
-    for i in subjects:
-        subj[c//3].append(subjects[i])
-        c += 1
-    keyboard = pzgram.create_keyboard(subj, one=False)
-    chat.send("Nice, now select the subject:", reply_markup=keyboard)
-    shared['status'] = 'newTest3'
-    cache['subj_keyb'] = keyboard
-    shared['data_cache'] = cache
-
-
-def new_test_4(message, chat, shared):
-    cache = shared['data_cache']
-    subjects = shared['subjects']
-    for i in subjects:
-        if subjects[i] == message.text:
-            cache['subject'] = i
-            break
-    else:
-        chat.send('The subject that you chose is not correct, retry')
-        chat.send("Nice, now select the subject:", reply_markup=cache['subj_keyb'])
-    chat.send('Ok, last step, send me the arguments of this test:', reply_markup=json.dumps({'remove_keyboard': True}))
-    shared['status'] = 'newTest4'
-    shared['data_cache'] = cache
-
-
-def new_test_5(message, chat, shared):
-    cache = shared['data_cache']
-    text = message.text.split('\n', 1)
-    if len(text) == 2:
-        SQL_function.add_new_test(cache['subject'], cache['date'], text[0], text[1])
-    else:
-        SQL_function.add_new_test(cache['subject'], cache['date'], text[0])
-    chat.send("Test added to your diary")
-    shared['data_cache'] = {}
-    shared['status'] = ''
+def new_test(chat, shared):
+    chat.send('Select a date:', reply_markup=shared['keyboards']['this_m_test'])
+    shared['data_cache'] = {'conv_dict': shared['keyboards']['this_m_c']}
+    shared['status'] = 'newTest'
 
 
 def new_homework(chat, shared):
     chat.send('Select a date:', reply_markup=shared['keyboards']['days'])
     shared['data_cache'] = {'conv_dict': shared['keyboards']['days_c']}
-    shared['status'] = 'newHW1'
+    shared['status'] = 'newHW'
 
 
-def new_homework_2(message, chat, shared):
+def manage_date(message, chat, shared):
     cache = shared['data_cache']
     conv_dict = cache['conv_dict']
     month_dict = {'Jan': '01', 'Feb': '02', 'Mar': '03', 'Apr': '04', 'May': '05', 'Jun': '06', 'Jul': '07',
@@ -106,7 +29,10 @@ def new_homework_2(message, chat, shared):
     if message.text in conv_dict:
         cache['date'] = conv_dict[message.text]
         chat.send('Ok, now select a subject:', reply_markup=shared['keyboards']['subj'])
-        shared['status'] = 'newHW2'
+        if shared['status'] == 'newHW':
+            shared['status'] = 'newHW2'
+        elif shared['status'] == 'newTest':
+            shared['status'] = 'newTest2'
     elif message.text == 'This Month':
         chat.send('Select a day', reply_markup=shared['keyboards']['this_m'])
         cache['conv_dict'] = shared['keyboards']['this_m_c']
@@ -129,7 +55,7 @@ def new_homework_2(message, chat, shared):
     shared['data_cache'] = cache
 
 
-def new_homework_3(message, chat, shared):
+def manage_subject(message, chat, shared):
     cache = shared['data_cache']
     subjects = shared['subjects']
     for i in subjects:
@@ -139,16 +65,29 @@ def new_homework_3(message, chat, shared):
     else:
         chat.send('The subject that you chose is not correct, retry')
         chat.send("Nice, now select the subject:", reply_markup=shared['keyboards']['subj'])
-    chat.send('Ok, last step, send me the notes about this homework:',
-              reply_markup=json.dumps({'remove_keyboard': True}))
-    shared['status'] = 'newHW3'
+    s = 'Ok, last step, send me the notes about this homework:'
+    if shared['status'] == 'newTest2':
+        s = 'Ok, last step, send me the arguments of this test'
+    chat.send(s, reply_markup=json.dumps({'remove_keyboard': True}))
+    if shared['status'] == 'newHW2':
+        shared['status'] = 'newHW3'
+    elif shared['status'] == 'newTest2':
+        shared['status'] = 'newTest3'
     shared['data_cache'] = cache
 
 
-def new_homework_4(message, chat, shared):
+def manage_args_notes(message, chat, shared):
     cache = shared['data_cache']
-    SQL_function.add_new_homework(cache['subject'], cache['date'], message.text)
-    chat.send("Homework added to your diary")
+    if shared['status'] == 'newHW3':
+        SQL_function.add_new_homework(cache['subject'], cache['date'], message.text)
+        chat.send("Homework added to your diary")
+    elif shared['status'] == 'newTest3':
+        text = message.text.split('\n', 1)
+        if len(text) == 2:
+            SQL_function.add_new_test(cache['subject'], cache['date'], text[0], text[1])
+        else:
+            SQL_function.add_new_test(cache['subject'], cache['date'], text[0])
+        chat.send("Test added to your diary")
     shared['data_cache'] = {}
     shared['status'] = ''
 
@@ -178,6 +117,9 @@ def set_keyboard(shared):
     next_m_l, next_m_c = useful_function.create_month_keyboard(month+1)
     days = pzgram.create_keyboard(days_l, one=True)
     this_m = pzgram.create_keyboard(this_m_l, one=True)
+    this_m_test_l = this_m_l.copy()
+    this_m_test_l.append(['Next Month', 'Other'])
+    this_m_test = pzgram.create_keyboard(this_m_test_l, one=True)
     next_m = pzgram.create_keyboard(next_m_l, one=True)
     all_month = pzgram.create_keyboard(useful_function.create_all_month_keyboard(), one=True)
     subj = [[], [], []]
@@ -185,24 +127,17 @@ def set_keyboard(shared):
         subj[i // 3].append(shared['subjects'][s])
     subj = pzgram.create_keyboard(subj, one=False)
     shared['keyboards'] = {'days': days, 'this_m': this_m, 'next_m': next_m, 'all_month': all_month,
-                           'days_c': days_c, 'this_m_c': this_m_c, 'next_m_c': this_m_c, 'subj': subj}
+                           'this_m_test': this_m_test, 'days_c': days_c, 'this_m_c': this_m_c,
+                           'next_m_c': this_m_c, 'subj': subj}
 
 
 def process_message(message, chat, shared):
-    if shared['status'] == 'newTest1':
-        new_test_2(message, chat, shared)
-    elif shared['status'] == 'newTest2':
-        new_test_3(message, chat, shared)
-    elif shared['status'] == 'newTest3':
-        new_test_4(message, chat, shared)
-    elif shared['status'] == 'newTest4':
-        new_test_5(message, chat, shared)
-    elif shared['status'] == 'newHW1':
-        new_homework_2(message, chat, shared)
-    elif shared['status'] == 'newHW2':
-        new_homework_3(message, chat, shared)
-    elif shared['status'] == 'newHW3':
-        new_homework_4(message, chat, shared)
+    if shared['status'] == 'newHW' or shared['status'] == 'newTest':
+        manage_date(message, chat, shared)
+    elif shared['status'] == 'newHW2' or shared['status'] == 'newTest2':
+        manage_subject(message, chat, shared)
+    elif shared['status'] == 'newHW3' or shared['status'] == 'newTest3':
+        manage_args_notes(message, chat, shared)
 
 
 def start_action(shared):
@@ -211,7 +146,7 @@ def start_action(shared):
     shared['subjects'] = {'Math': 'Math', 'Italian': 'Ita', 'English': 'Eng', 'Systems': 'Sys', 'TPS': 'TPS',
                           'History': 'Hist', 'Gymnastic': 'Gym', 'Telecommunications': 'Tele'}
 
-bot.set_commands({'/newtest': new_test_1, '/calendar': view_calendar, '/newhw': new_homework})  # Change with keyboard
+bot.set_commands({'/newtest': new_test, '/calendar': view_calendar, '/newhw': new_homework})  # Change with keyboard
 bot.set_function({'start_action': start_action, 'after_division': process_message})
 bot.set_timers({7200: allert_timer, 43200: set_keyboard})
 bot.run()

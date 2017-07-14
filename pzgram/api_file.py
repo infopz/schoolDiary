@@ -17,7 +17,7 @@ def api_request(key, method, p=None):
         else:
             action, data = recognize_error(status_code, data)
             if action == 'continue':
-                raise ApiError
+                return 'apiError'
             elif action == 'stop':
                 raise StopBot(data)
             elif action == 'retry':
@@ -32,16 +32,16 @@ def recognize_error(code, data):
         pass
     if code == 400:
         print('API_Request - BadRequest Error ' + error_description)
-        return 'continue'
+        return 'continue', None
     elif code == 401:
         print('API_Request - BotKey Error ' + error_description)
         return 'stop', 'API_Request - BotKey Error ' + error_description
     elif code == 403:
         print('API_Request - Privacy Error ' + error_description)
-        return 'continue'
+        return 'continue', None
     elif code == 404:
         print('API_Request - NotFound Error ' + error_description)
-        return 'continue'
+        return 'continue', None
     elif code == 409:
         print('API_Request - AnotherInstance Error - Retry in 3s')
         return 'retry', 3
@@ -51,7 +51,7 @@ def recognize_error(code, data):
         return 'retry ', int(second)
     elif code == 500:
         print('API_Request - TelegramInternal Error')
-        return 'continue'
+        return 'continue', None
     else:
         print('API_Request - Unknown Error ' + error_description)
-        return 'continue'
+        return 'continue', None

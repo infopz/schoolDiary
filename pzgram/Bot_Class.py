@@ -214,7 +214,7 @@ def create_parameters_tuple(parameters, bot, chat, message, arguments, shared):
 
 
 def create_keyboard(button, one=False, res=True):
-    keyb = {"keyboard": button, "one_time_keyboard": False, "resize_keyboard": True}
+    keyb = {"keyboard": button, "one_time_keyboard": one, "resize_keyboard": res}
     keyb = json.dumps(keyb)
     return keyb
 

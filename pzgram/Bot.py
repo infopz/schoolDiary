@@ -64,14 +64,12 @@ class Bot:
     def get_update(self):
         p = {'offset': self.offset, 'limit': 1, 'timeout': 1000}
         while True:
-            try:
-                update = api_request(self.botKey, 'getUpdates', p)
-            except ApiError:
+            update = api_request(self.botKey, 'getUpdates', p)
+            if update == 'apiError':
                 continue
-            except StopBot:
-                raise KeyboardInterrupt
             if not update['ok']:
-                print('Error with the update, countinue')
+                print('Error with the update, continue')
+                print(update['description'])
                 continue
             if len(update['result']) != 0:
                 data = update['result'][0]
@@ -129,12 +127,7 @@ class Bot:
             pass
 
     def start_bot(self, shared):
-        while True:
-            try:
-                api_request(self.botKey, 'getMe')  # Check Api and Conncction
-                break
-            except ApiError:
-                time.sleep(0.2)
+        api_request(self.botKey, 'getMe')  # Check Api and Conncction
         self.start_date = datetime.now()  # FIXME: check pc time
         if self.start_action:
             arg = []
