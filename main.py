@@ -1,6 +1,6 @@
 import pzgram
 import json
-import time
+from datetime import datetime
 
 import SQL_function
 import apiKey
@@ -92,19 +92,29 @@ def manage_args_notes(message, chat, shared):
     shared['status'] = ''
 
 
-def view_calendar(chat, shared, args):
-    '''s = ''
-    tests, homeworks = SQL_function.find_all()
-    for t in tests:
-        s += useful_function.convert_test(t) + '\n'
-    for hw in homeworks:
-        s += useful_function.convert_homework(hw) + '\n'
-    chat.send("Here's yours commitments:\n"+s)'''
-    #if args[0] == 'month':
+def view_calendar(chat, args):
+    if args[0] == 'all':
+        s = ''
+        tests, homeworks = SQL_function.find_all()
+        for t in tests:
+            s += useful_function.convert_test(t) + '\n'
+        for hw in homeworks:
+            s += useful_function.convert_homework(hw) + '\n'
+        chat.send("Here's yours commitments:\n"+s)
+    if args[0] == 'week':
+        s = ''
+        start = datetime.now().strftime('%m%d')
+        stop = useful_function.modify_days(start, 7)
+        tests, homeworks = SQL_function.find_between(start, stop)
+        for t in tests:
+            s += useful_function.convert_test(t) + '\n'
+        for hw in homeworks:
+            s += useful_function.convert_homework(hw) + '\n'
+        chat.send("Here's yours commitments in a week:\n"+s)
 
 
 def allert_timer(bot):
-    h = time.strftime('%H')
+    h = datetime.now().strftime('%H')
     if h == '14':
         s = useful_function.check_tomorrow()
         if s != '':
@@ -112,7 +122,7 @@ def allert_timer(bot):
 
 
 def set_keyboard(shared):
-    month = int(time.strftime('%m'))
+    month = int(datetime.now().strftime('%m'))
     days_l, days_c = useful_function.create_hw_keyboard()
     this_m_l, this_m_c = useful_function.create_this_month_keyboard()
     next_m_l, next_m_c = useful_function.create_month_keyboard(month+1)

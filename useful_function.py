@@ -36,7 +36,7 @@ def create_date(day, month):
 
 
 def modify_days(date, n_days, operation=True):  # True -> Add, False -> Sub
-    date_formatted = datetime.strptime(str(date) + '2018', "%d%m%Y")
+    date_formatted = datetime.strptime(str(date) + '2018', "%m%d%Y")
     if operation:
         date_new = date_formatted + timedelta(days=int(n_days))
         return date_new.strftime('%m%d')
