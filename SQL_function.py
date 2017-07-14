@@ -23,7 +23,7 @@ def add_new_homework(subj, date, notes):
     con = sqlite3.connect('diary.db')
     with con:
         cur = con.cursor()
-        cur.execute(f"INSERT INTO Homework VALUES ('{subj}', {date}, '{notes}', 0)")
+        cur.execute(f"INSERT INTO Homework VALUES ('{subj}', '{date}', '{notes}', 0)")
 
 
 def find_commitments(date):
@@ -33,6 +33,17 @@ def find_commitments(date):
         cur.execute(f"SELECT Subject, Arguments, Notes FROM Test WHERE Date = '{date}'")
         test = cur.fetchall()
         cur.execute(f"SELECT Subject, Notes, Finished FROM Homework WHERE Date = '{date}'")
+        homework = cur.fetchall()
+    return test, homework
+
+
+def find_between(start, stop):
+    con = sqlite3.connect('diary.db')
+    with con:
+        cur = con.cursor()
+        cur.execute(f"SELECT * FROM Test WHERE Date BETWEEN '{start}' AND '{stop}'")
+        test = cur.fetchall()
+        cur.execute(f"SELECT * FROM Homework WHERE Date BETWEEN '{start}' AND '{stop}'")
         homework = cur.fetchall()
     return test, homework
 

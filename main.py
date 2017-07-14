@@ -92,14 +92,15 @@ def manage_args_notes(message, chat, shared):
     shared['status'] = ''
 
 
-def view_calendar(chat):
-    s = ''
+def view_calendar(chat, shared, args):
+    '''s = ''
     tests, homeworks = SQL_function.find_all()
     for t in tests:
         s += useful_function.convert_test(t) + '\n'
     for hw in homeworks:
         s += useful_function.convert_homework(hw) + '\n'
-    chat.send("Here's yours commitments:\n"+s)
+    chat.send("Here's yours commitments:\n"+s)'''
+    #if args[0] == 'month':
 
 
 def allert_timer(bot):
@@ -128,7 +129,7 @@ def set_keyboard(shared):
     subj = pzgram.create_keyboard(subj, one=False)
     shared['keyboards'] = {'days': days, 'this_m': this_m, 'next_m': next_m, 'all_month': all_month,
                            'this_m_test': this_m_test, 'days_c': days_c, 'this_m_c': this_m_c,
-                           'next_m_c': this_m_c, 'subj': subj}
+                           'next_m_c': next_m_c, 'subj': subj}
 
 
 def process_message(message, chat, shared):
@@ -146,7 +147,7 @@ def start_action(shared):
     shared['subjects'] = {'Math': 'Math', 'Italian': 'Ita', 'English': 'Eng', 'Systems': 'Sys', 'TPS': 'TPS',
                           'History': 'Hist', 'Gymnastic': 'Gym', 'Telecommunications': 'Tele'}
 
-bot.set_commands({'/newtest': new_test, '/calendar': view_calendar, '/newhw': new_homework})  # Change with keyboard
+bot.set_commands({'/newtest': new_test, '/view': view_calendar, '/newhw': new_homework})  # FIXME:Change with keyboard
 bot.set_function({'start_action': start_action, 'after_division': process_message})
 bot.set_timers({7200: allert_timer, 43200: set_keyboard})
 bot.run()

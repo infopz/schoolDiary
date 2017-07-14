@@ -32,29 +32,29 @@ def create_date(day, month):
     day = str(day)
     if len(day) == 1:
         day = "0" + day
-    return day+month
+    return month+day
 
 
 def modify_days(date, n_days, operation=True):  # True -> Add, False -> Sub
     date_formatted = datetime.strptime(str(date) + '2018', "%d%m%Y")
     if operation:
         date_new = date_formatted + timedelta(days=int(n_days))
-        return date_new.strftime('%d%m')
+        return date_new.strftime('%m%d')
     else:
         date_new = date_formatted - timedelta(days=int(n_days))
-        return date_new.strftime('%d%m')
+        return date_new.strftime('%m%d')
 
 
 def convert_test(test):
-    return test[1][0:2] + '/' + test[1][2:4] + ' ' + test[0] + ' test'
+    return test[1][2:4] + '/' + test[1][0:2] + ' ' + test[0] + ' test'
 
 
 def convert_homework(hw):
-    return hw[1][0:2] + '/' + hw[1][2:4] + ' ' + hw[0] + ' homework'
+    return hw[1][2:4] + '/' + hw[1][0:2] + ' ' + hw[0] + ' homework'
 
 
 def check_tomorrow():
-    date = datetime.now().strftime('%d%m')
+    date = datetime.now().strftime('%m%d')
     tomorrow = modify_days(date, 1)
     test, homeworks = SQL_function.find_commitments(tomorrow)
     not_compl_homeworks = []
@@ -131,7 +131,7 @@ def create_month_keyboard(month):
         d_week = week_list[int(day.strftime('%u'))-1]
         button = d_week + ' ' + str(i)
         keyboard[row].append(button)
-        conversion_dict[button] = day.strftime('%d%m')
+        conversion_dict[button] = day.strftime('%m%d')
     return keyboard, conversion_dict
 
 
@@ -154,7 +154,7 @@ def create_this_month_keyboard():
         d_week = week_list[int(day.strftime('%u')) - 1]
         button = d_week + ' ' + day.strftime('%d')
         keyboard[row].append(button)
-        conversion_dict[button] = day.strftime('%d%m')
+        conversion_dict[button] = day.strftime('%m%d')
     return keyboard, conversion_dict
 
 
