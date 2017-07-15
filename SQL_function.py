@@ -17,6 +17,7 @@ def add_new_test(subj, date, arg, notes=None):
             cur.execute(f"INSERT INTO Test(Subject, Date, Arguments) VALUES ('{subj}', '{date}', '{arg}')")
         else:
             cur.execute(f"INSERT INTO Test VALUES ('{subj}', '{date}', '{arg}', '{notes}')")
+        return cur.lastrowid
 
 
 def add_new_homework(subj, date, notes):
@@ -24,6 +25,7 @@ def add_new_homework(subj, date, notes):
     with con:
         cur = con.cursor()
         cur.execute(f"INSERT INTO Homework VALUES ('{subj}', '{date}', '{notes}', 0)")
+        return cur.lastrowid
 
 
 def find_one_day(date):
@@ -57,3 +59,12 @@ def find_all():
         cur.execute("SELECT * FROM Homework")
         homework = cur.fetchall()
     return test, homework
+
+
+def get_one_row(table, rowid):
+    con = sqlite3.connect('diary.db')
+    with con:
+        cur = con.cursor()
+        cur.execute(f"SELECT * FROM {table} WHERE ROWID = {rowid}")
+        row = cur.fetchone()
+    return row

@@ -9,7 +9,7 @@ import useful_function
 bot = pzgram.Bot(apiKey.apiBot)
 
 
-def start_command(chat, message, shared):
+def start_command(chat, message):
     chat.send('Hi, *'+message.sender.first_name+'*\n'
               'Welcome to schoolDiaryBot, \nUse the keyboard to view all the possible commands\n'
               'This is an [open-source bot](https://github.com/infopz/pzGram_schoolDiary) by @infopz',
@@ -85,18 +85,22 @@ def manage_subject(message, chat, shared):
 
 def manage_args_notes(message, chat, shared):
     cache = shared['data_cache']
+    last = shared['last']
     if shared['status'] == 'newHW3':
-        SQL_function.add_new_homework(cache['subject'], cache['date'], message.text)
+        row_id = SQL_function.add_new_homework(cache['subject'], cache['date'], message.text)
+        last.append(['Homework', row_id])
         chat.send("Homework added to your diary")
     elif shared['status'] == 'newTest3':
         text = message.text.split('\n', 1)
         if len(text) == 2:
-            SQL_function.add_new_test(cache['subject'], cache['date'], text[0], text[1])
+            row_id = SQL_function.add_new_test(cache['subject'], cache['date'], text[0], text[1])
         else:
-            SQL_function.add_new_test(cache['subject'], cache['date'], text[0])
+            row_id = SQL_function.add_new_test(cache['subject'], cache['date'], text[0])
+        last.append(['Test', row_id])
         chat.send("Test added to your diary")
     shared['data_cache'] = {}
     shared['status'] = ''
+    shared['last'] = last
 
 
 def view_calendar(chat, args):
@@ -104,37 +108,44 @@ def view_calendar(chat, args):
         return  # chat send
     today = datetime.now().strftime('%m%d')
     tomorrow = useful_function.modify_days(today, 1)
-    if args[0] == 'all':
-        s = ''
-        tests, homeworks = SQL_function.find_all()
-        for t in tests:
-            s += useful_function.convert_test(t) + '\n'
-        for hw in homeworks:
-            s += useful_function.convert_homework(hw) + '\n'
-        chat.send("Here's yours commitments:\n"+s)
+    #if args[0] == 'all':  FIXME: create a /summary command
+    #    s = ''
+    #    tests, homeworks = SQL_function.find_all()
+    #    for t in tests:
+    #        s += useful_function.convert_test(t)
+    #    for hw in homeworks:
+    #        s += useful_function.convert_homework(hw)
+    #    chat.send("Here's yours commitments:\n"+s)
+    s = ''
+    tests, homeworks = None, None
     if args[0] == 'week':
-        s = ''
         stop = useful_function.modify_days(tomorrow, 7)
         tests, homeworks = SQL_function.find_between(tomorrow, stop)
-        for t in tests:
-            s += useful_function.convert_test(t) + '\n'
-        for hw in homeworks:
-            s += useful_function.convert_homework(hw) + '\n'
-        chat.send("Here's yours commitments in a week:\n"+s)
-    if args[0] == 'tomorrow':
-        s = ''
+    elif args[0] == 'tomorrow':
         tests, homeworks = SQL_function.find_one_day(tomorrow)
-        if len(tests):
-            s += 'Test:\n'
-            for t in tests:
-                if t[2] is not None:
-                    s += '*' + t[0] + ' test*\n' + t[1] + ' - ' + t[2] + ' \n'
-                else:
-                    s += '*' + t[0] + ' test*\n' + t[1] + '\n'
-        if len(homeworks):
-            for h in homeworks:
-                s += '*' + h[0] + ' homework*\n' + h[1] + '\n'
+    if len(tests):
+        for t in tests:
+            s += useful_function.convert_test_all(t) + '\n'
+    if len(homeworks):
+        for hw in homeworks:
+            s += useful_function.convert_homework_all(hw) + '\n'
+    if args[0] == 'week':
+        chat.send("Here's yours commitments in a week:\n"+s)
+    else:
         chat.send(s)
+
+
+def edit_command(chat, message, args, shared):
+    last = shared['last']
+    keyboard = []
+    for i in range(4):
+        index = -1-i
+        try:
+            row = SQL_function.get_one_row(last[index][0], last[index][1])
+            date = datetime.strptime(row[2], '%m%d').strftime('%d/%m')
+            # work in progress
+        except KeyError:
+            break
 
 
 def allert_timer(bot):
@@ -184,10 +195,12 @@ def process_message(message, chat, shared, args):
 def start_action(shared):
     shared['status'] = ''
     shared['data_cache'] = {}
+    shared['lasts'] = []  # FIXME: maybe save with pickle (or in another table)
     shared['subjects'] = {'Math': 'Math', 'Italian': 'Ita', 'English': 'Eng', 'Systems': 'Sys', 'TPS': 'TPS',
                           'History': 'Hist', 'Gymnastic': 'Gym', 'Telecommunications': 'Tele'}
 
-bot.set_commands({'/newtest': new_test, '/view': view_calendar, '/newhw': new_homework, '/start': start_command})
+bot.set_commands({'/newtest': new_test, '/view': view_calendar, '/newhw': new_homework, '/start': start_command,
+                  '/edit': edit_command})
 # FIXME:Change with keyboard
 bot.set_function({'start_action': start_action, 'after_division': process_message})
 bot.set_timers({7200: allert_timer, 43200: set_keyboard})
