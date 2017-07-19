@@ -127,22 +127,61 @@ def view_manage_date(message, chat, shared):
     if start_date != '' and stop_date != '':
         m, k, conv_dict = view_commitments_between(start_date, stop_date)
         chat.send(m, reply_markup=k)
-        print(conv_dict)
+        shared['data_cache'] = {'conv_dict': conv_dict, 'keyb': k}
+        shared['status'] = 'view2'
+
+
+def view_one(chat, message, shared):
+    cache = shared['data_cache']
+    if message.text not in cache['conv_dict']:
+        chat.send('Error, please select another one', reply_markup=cache['keyb'])
+        return
+    row = cache['conv_dict'][message.text]
+    if row[0] == 't':
+        test = SQL_function.get_one_row('Test', row[1:])
+        m = '*' + test[0] + ' Test*\n'
+        year = '2018'
+        if int(test[1][0:2]) > 7:
+            year = '2017'
+        date = datetime.strptime(test[1]+year, '%m%d%Y').strftime('%a %d %b')  # Ex. Mon 12 Feb
+        m += date + '\n'
+        m += test[2] + '\n'
+        keyboard = [['Menu', 'Edit Date'], ['Edit Subj', 'Edit Arg']]  # FIXME: Insert Back Button
+        if test[3] is not None:
+            m += test[3]
+            keyboard = [['Menu', 'Edit Date'], ['Edit Subj', 'Edit Arg', 'Edit Notes']]
+        keyboard = pzgram.create_keyboard(keyboard, one=True)
+        chat.send(m, reply_markup=keyboard)
+    elif row[0] == 'h':
+        hw = SQL_function.get_one_row('Homework', row[1:])
+        m = '*' + hw[0] + ' Homework*\n'
+        year = '2018'
+        if int(hw[1][0:2]) > 7:
+            year = '2017'
+        date = datetime.strptime(hw[1] + year, '%m%d%Y').strftime('%a %d %b')  # Ex. Mon 12 Feb
+        m += date + '\n'
+        m += hw[2] + '\n'
+        keyboard = [['Menu', 'Completed'], ['Edit Date', 'Edit Subj', 'Edit Notes']]
+        if hw[3]:
+            m += '_Completed_'
+            keyboard = [['Menu'], ['Edit Date', 'Edit Subj', 'Edit Notes']]
+        keyboard = pzgram.create_keyboard(keyboard, one=True)
+        chat.send(m, reply_markup=keyboard)
 
 
 def view_commitments_between(start, stop):
     tests, homeworks = SQL_function.find_between(start, stop)
     s = ''
     current_date = start
-    year = '18'
-    if int(start[0:2]) > 7:
-        year = '17'
-    current_day = datetime.strptime(start+year, '%m%d%y').strftime('%a')
     keyboard = []
     conv_dict = {}
     row = -1
     while True:
         smt_found = False  # something
+        year = '18'
+        if int(start[0:2]) > 7:
+            year = '17'
+        current_day = datetime.strptime(current_date + year, '%m%d%y').strftime('%a')
         formatted_date = current_date[2:4] + '/' + current_date[0:2]
         for t in tests:
             if t[2] == current_date:
@@ -165,14 +204,13 @@ def view_commitments_between(start, stop):
                 r = h[1] + ' homework'
                 s += r + '\n'
                 keyboard[row].append(formatted_date + ' ' + r)
-                conv_dict[formatted_date + ' ' + r] = 't' + str(h[0])
+                conv_dict[formatted_date + ' ' + r] = 'h' + str(h[0])
         if current_date == stop:
             break
         current_date = (datetime.strptime(current_date, '%m%d') + timedelta(days=1)).strftime('%m%d')
     keyboard.append(['Menu'])
     keyboard = pzgram.create_keyboard(keyboard, one=True)
     return s, keyboard, conv_dict
-
 
 
 def allert_timer(bot):
@@ -221,6 +259,8 @@ def process_message(message, chat, shared, args):  # FIXME: Do this better, mayb
         manage_args_notes(message, chat, shared)
     elif shared['status'] == 'view':
         view_manage_date(message, chat, shared)
+    elif shared['status'] == 'view2':
+        view_one(chat, message, shared)
 
 
 def start_action(shared):
@@ -230,7 +270,6 @@ def start_action(shared):
                           'History': 'Hist', 'Gymnastic': 'Gym', 'Telecom': 'Tele'}
 
 bot.set_commands({'/newtest': new_test, '/view': view_calendar, '/newhw': new_homework, '/start': start_command})
-# FIXME:Change with keyboard
 bot.set_function({'start_action': start_action, 'after_division': process_message})
 bot.set_timers({7200: allert_timer, 43200: set_keyboard})
 bot.set_keyboard([['View'], ['New Test', 'New Homework']])
