@@ -31,15 +31,15 @@ def modify_days(date, n_days, operation=True):  # True -> Add, False -> Sub
         return date_new.strftime('%m%d')
 
 
-def convert_test_all(t):
-    if t[2] is not None:
-        return '*' + t[0] + ' test*\n' + t[1] + ' - ' + t[2] + ' \n'
+def convert_test_all(t):  # call only with date
+    if t[3] is not None:
+        return '*' + t[1] + ' test*\n' + t[2] + ' - ' + t[3] + ' \n'
     else:
-        return '*' + t[0] + ' test*\n' + t[1] + '\n'
+        return '*' + t[1] + ' test*\n' + t[2] + '\n'
 
 
 def convert_homework_all(h):
-    return '*' + h[0] + ' homework*\n' + h[1] + '\n'
+    return '*' + h[1] + ' homework*\n' + h[2] + '\n'
 
 
 def check_tomorrow():

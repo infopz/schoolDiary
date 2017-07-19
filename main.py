@@ -1,6 +1,6 @@
 import pzgram
 import json
-from datetime import datetime
+from datetime import datetime, timedelta
 
 import SQL_function
 import apiKey
@@ -85,10 +85,8 @@ def manage_subject(message, chat, shared):
 
 def manage_args_notes(message, chat, shared):
     cache = shared['data_cache']
-    last = shared['last']
     if shared['status'] == 'newHW3':
         row_id = SQL_function.add_new_homework(cache['subject'], cache['date'], message.text)
-        last.append(['Homework', row_id])
         chat.send("Homework added to your diary")
     elif shared['status'] == 'newTest3':
         text = message.text.split('\n', 1)
@@ -96,56 +94,85 @@ def manage_args_notes(message, chat, shared):
             row_id = SQL_function.add_new_test(cache['subject'], cache['date'], text[0], text[1])
         else:
             row_id = SQL_function.add_new_test(cache['subject'], cache['date'], text[0])
-        last.append(['Test', row_id])
         chat.send("Test added to your diary")
     shared['data_cache'] = {}
     shared['status'] = ''
-    shared['last'] = last
 
 
-def view_calendar(chat, args):
-    if len(args) != 1:
-        return  # chat send
-    today = datetime.now().strftime('%m%d')
-    tomorrow = useful_function.modify_days(today, 1)
-    #if args[0] == 'all':  FIXME: create a /summary command
-    #    s = ''
-    #    tests, homeworks = SQL_function.find_all()
-    #    for t in tests:
-    #        s += useful_function.convert_test(t)
-    #    for hw in homeworks:
-    #        s += useful_function.convert_homework(hw)
-    #    chat.send("Here's yours commitments:\n"+s)
+def view_calendar(chat, shared):
+    keyboard = pzgram.create_keyboard([['This Week', 'Next Week'], ['This Month', 'Next Month'], ['Other', 'Back']],
+                                      one=True)
+    chat.send('Select a period', reply_markup=keyboard)
+    shared['status'] = 'view'
+
+
+def view_manage_date(message, chat, shared):
+    start_date, stop_date = '', ''
+    month_length = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
+    if message.text == 'This Week':
+        start_date = datetime.now().strftime('%m%d')
+        stop_date = (datetime.now() + timedelta(days=(7-int(datetime.now().strftime('%u'))))).strftime('%m%d')
+    elif message.text == 'Next Week':
+        start_date = (datetime.now() + timedelta(days=(8-int(datetime.now().strftime('%u'))))).strftime('%m%d')
+        stop_date = (datetime.strptime(start_date, '%m%d') + timedelta(days=6)).strftime('%m%d')
+    elif message.text == 'This Month':
+        start_date = datetime.now().strftime('%m%d')
+        this_m = datetime.now().strftime('%m')
+        stop_date = this_m+str(month_length[int(this_m)])
+    elif message.text == 'Next Month':
+        this_m = datetime.now().month
+        next_m = (datetime.now() + timedelta(days=month_length[int(this_m)])).strftime('%m')
+        start_date = next_m + '01'
+        stop_date = next_m + str(month_length[int(next_m)])
+    if start_date != '' and stop_date != '':
+        m, k, conv_dict = view_commitments_between(start_date, stop_date)
+        chat.send(m, reply_markup=k)
+        print(conv_dict)
+
+
+def view_commitments_between(start, stop):
+    tests, homeworks = SQL_function.find_between(start, stop)
     s = ''
-    tests, homeworks = None, None
-    if args[0] == 'week':
-        stop = useful_function.modify_days(tomorrow, 7)
-        tests, homeworks = SQL_function.find_between(tomorrow, stop)
-    elif args[0] == 'tomorrow':
-        tests, homeworks = SQL_function.find_one_day(tomorrow)
-    if len(tests):
-        for t in tests:
-            s += useful_function.convert_test_all(t) + '\n'
-    if len(homeworks):
-        for hw in homeworks:
-            s += useful_function.convert_homework_all(hw) + '\n'
-    if args[0] == 'week':
-        chat.send("Here's yours commitments in a week:\n"+s)
-    else:
-        chat.send(s)
-
-
-def edit_command(chat, message, args, shared):
-    last = shared['last']
+    current_date = start
+    year = '18'
+    if int(start[0:2]) > 7:
+        year = '17'
+    current_day = datetime.strptime(start+year, '%m%d%y').strftime('%a')
     keyboard = []
-    for i in range(4):
-        index = -1-i
-        try:
-            row = SQL_function.get_one_row(last[index][0], last[index][1])
-            date = datetime.strptime(row[2], '%m%d').strftime('%d/%m')
-            # work in progress
-        except KeyError:
+    conv_dict = {}
+    row = -1
+    while True:
+        smt_found = False  # something
+        formatted_date = current_date[2:4] + '/' + current_date[0:2]
+        for t in tests:
+            if t[2] == current_date:
+                if not smt_found:
+                    smt_found = True
+                    s += '*' + current_day + ' ' + formatted_date + '*\n'
+                keyboard.append([])
+                row += 1
+                r = t[1] + ' test'
+                s += r + '\n'
+                keyboard[row].append(formatted_date + ' ' + r)
+                conv_dict[formatted_date + ' ' + r] = 't' + str(t[0])
+        for h in homeworks:
+            if h[2] == current_date:
+                if not smt_found:
+                    smt_found = True
+                    s += '*' + current_day + ' ' + formatted_date + '*\n'
+                keyboard.append([])
+                row += 1
+                r = h[1] + ' homework'
+                s += r + '\n'
+                keyboard[row].append(formatted_date + ' ' + r)
+                conv_dict[formatted_date + ' ' + r] = 't' + str(h[0])
+        if current_date == stop:
             break
+        current_date = (datetime.strptime(current_date, '%m%d') + timedelta(days=1)).strftime('%m%d')
+    keyboard.append(['Menu'])
+    keyboard = pzgram.create_keyboard(keyboard, one=True)
+    return s, keyboard, conv_dict
+
 
 
 def allert_timer(bot):
@@ -156,7 +183,7 @@ def allert_timer(bot):
             pzgram.Chat(20403805, bot).send(s)
 
 
-def set_keyboard(shared):
+def set_keyboard(shared):  # FIXME: Insert back in all keyb
     month = int(datetime.now().strftime('%m'))
     days_l, days_c = useful_function.create_hw_keyboard()
     this_m_l, this_m_c = useful_function.create_this_month_keyboard()
@@ -177,9 +204,11 @@ def set_keyboard(shared):
                            'next_m_c': next_m_c, 'subj': subj}
 
 
-def process_message(message, chat, shared, args):
-    if message.text == 'View':
-        view_calendar(chat, args)
+def process_message(message, chat, shared, args):  # FIXME: Do this better, maybe a dict
+    if message.text == 'Menu':
+        chat.send('Select a command:')
+    elif message.text == 'View':
+        view_calendar(chat, shared)
     elif message.text == 'New Test':
         new_test(chat, shared)
     elif message.text == 'New Homework':
@@ -190,17 +219,17 @@ def process_message(message, chat, shared, args):
         manage_subject(message, chat, shared)
     elif shared['status'] == 'newHW3' or shared['status'] == 'newTest3':
         manage_args_notes(message, chat, shared)
+    elif shared['status'] == 'view':
+        view_manage_date(message, chat, shared)
 
 
 def start_action(shared):
     shared['status'] = ''
     shared['data_cache'] = {}
-    shared['lasts'] = []  # FIXME: maybe save with pickle (or in another table)
     shared['subjects'] = {'Math': 'Math', 'Italian': 'Ita', 'English': 'Eng', 'Systems': 'Sys', 'TPS': 'TPS',
-                          'History': 'Hist', 'Gymnastic': 'Gym', 'Telecommunications': 'Tele'}
+                          'History': 'Hist', 'Gymnastic': 'Gym', 'Telecom': 'Tele'}
 
-bot.set_commands({'/newtest': new_test, '/view': view_calendar, '/newhw': new_homework, '/start': start_command,
-                  '/edit': edit_command})
+bot.set_commands({'/newtest': new_test, '/view': view_calendar, '/newhw': new_homework, '/start': start_command})
 # FIXME:Change with keyboard
 bot.set_function({'start_action': start_action, 'after_division': process_message})
 bot.set_timers({7200: allert_timer, 43200: set_keyboard})

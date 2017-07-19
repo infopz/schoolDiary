@@ -32,20 +32,20 @@ def find_one_day(date):
     con = sqlite3.connect('diary.db')
     with con:
         cur = con.cursor()
-        cur.execute(f"SELECT Subject, Arguments, Notes FROM Test WHERE Date = '{date}'")
+        cur.execute(f"SELECT ROWID, Subject, Arguments, Notes FROM Test WHERE Date = '{date}'")
         test = cur.fetchall()
-        cur.execute(f"SELECT Subject, Notes, Finished FROM Homework WHERE Date = '{date}'")
+        cur.execute(f"SELECT ROWID, Subject, Notes, Finished FROM Homework WHERE Date = '{date}'")
         homework = cur.fetchall()
     return test, homework
 
 
-def find_between(start, stop):
+def find_between(start, stop):  # FIXME: manage the chainging of years
     con = sqlite3.connect('diary.db')
     with con:
         cur = con.cursor()
-        cur.execute(f"SELECT * FROM Test WHERE Date BETWEEN '{start}' AND '{stop}'")
+        cur.execute(f"SELECT ROWID, * FROM Test WHERE Date BETWEEN '{start}' AND '{stop}'")
         test = cur.fetchall()
-        cur.execute(f"SELECT * FROM Homework WHERE Date BETWEEN '{start}' AND '{stop}'")
+        cur.execute(f"SELECT ROWID, * FROM Homework WHERE Date BETWEEN '{start}' AND '{stop}'")
         homework = cur.fetchall()
     return test, homework
 
@@ -54,9 +54,9 @@ def find_all():
     con = sqlite3.connect('diary.db')
     with con:
         cur = con.cursor()
-        cur.execute("SELECT * FROM Test")
+        cur.execute("SELECT ROWID, * FROM Test")
         test = cur.fetchall()
-        cur.execute("SELECT * FROM Homework")
+        cur.execute("SELECT ROWID, * FROM Homework")
         homework = cur.fetchall()
     return test, homework
 
