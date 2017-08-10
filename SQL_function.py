@@ -17,7 +17,6 @@ def add_new_test(subj, date, arg, notes=None):
             cur.execute(f"INSERT INTO Test(Subject, Date, Arguments) VALUES ('{subj}', '{date}', '{arg}')")
         else:
             cur.execute(f"INSERT INTO Test VALUES ('{subj}', '{date}', '{arg}', '{notes}')")
-        return cur.lastrowid
 
 
 def add_new_homework(subj, date, notes):
@@ -25,7 +24,6 @@ def add_new_homework(subj, date, notes):
     with con:
         cur = con.cursor()
         cur.execute(f"INSERT INTO Homework VALUES ('{subj}', '{date}', '{notes}', 0)")
-        return cur.lastrowid
 
 
 def find_one_day(date):
@@ -50,17 +48,6 @@ def find_between(start, stop):  # FIXME: manage the chainging of years
     return test, homework
 
 
-def find_all():
-    con = sqlite3.connect('diary.db')
-    with con:
-        cur = con.cursor()
-        cur.execute("SELECT ROWID, * FROM Test")
-        test = cur.fetchall()
-        cur.execute("SELECT ROWID, * FROM Homework")
-        homework = cur.fetchall()
-    return test, homework
-
-
 def get_one_row(table, rowid):
     con = sqlite3.connect('diary.db')
     with con:
@@ -68,3 +55,13 @@ def get_one_row(table, rowid):
         cur.execute(f"SELECT * FROM {table} WHERE ROWID = {rowid}")
         row = cur.fetchone()
     return row
+
+
+def update_value(table, rowid, column, new_value):
+    con = sqlite3.connect('diary.db')
+    with con:
+        cur = con.cursor()
+        if column == 'Finished':
+            cur.execute(f"UPDATE {table} SET {column} = {new_value} WHERE ROWID = {rowid}")
+        else:
+            cur.execute(f"UPDATE {table} SET {column} = '{new_value}' WHERE ROWID = {rowid}")
