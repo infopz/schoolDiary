@@ -4,6 +4,7 @@ from multiprocessing import Process, Manager
 
 from .ExceptionFile import *
 from .Bot_Class import *
+from .api_file import api_request
 
 
 class Bot:
@@ -11,6 +12,7 @@ class Bot:
     def __init__(self, key):
         self.botKey = key
         self.offset = 0
+        self.started = False
         self.commands = {}
         self.useful_function = {}
         self.timers = {}
@@ -22,6 +24,7 @@ class Bot:
         self.start_command = False
         self.before_division = False
         self.after_division = False
+        self.default_keyboard = None
         print("Bot Created")
 
     def set_commands(self, command_dict):
@@ -47,18 +50,6 @@ class Bot:
     def set_timers(self, timer_dict):
         self.timers = timer_dict
 
-    def api_request(self, method, p={}):
-        try:
-            data = requests.get(f"https://api.telegram.org/bot{self.botKey}/{method}", params=p)
-        except Exception as e:
-            print('Request error - '+str(e))
-            raise RequestError(str(e))
-        if data.status_code == 200:  # 409 -> Other istance 404 -> Something not found 400 -> Bad request
-            data = data.json()
-            return data
-        else:
-            raise AnotherStatusError(data.status_code)
-
     def download_file(self, file_path, local_path=''):
         url = f'https://api.telegram.org/file/bot{self.botKey}/{file_path}'
         local_filename = url.split('/')[-1]
@@ -74,15 +65,12 @@ class Bot:
     def get_update(self):
         p = {'offset': self.offset, 'limit': 1, 'timeout': 1000}
         while True:
-            try:
-                update = self.api_request('getUpdates', p)
-            except AnotherStatusError or RequestError as e:
-                if str(e) == '409':
-                    print('Another Instance Error, try again')
-                time.sleep(3)
+            update = api_request(self.botKey, 'getUpdates', p)
+            if update == 'apiError':
                 continue
             if not update['ok']:
-                print('Error with the update, countinue')
+                print('Error with the update, continue')
+                print(update['description'])
                 continue
             if len(update['result']) != 0:
                 data = update['result'][0]
@@ -99,28 +87,21 @@ class Bot:
         if len(self.timers) != 0:
             p2 = Process(target=self.run_timer, args=(shared,))
             process.append(p2)
+        self.start_bot(shared)
         for p in process:
             p.start()
         try:
             for p in process:
                 p.join()
         except KeyboardInterrupt:
-            print("Shutting Down....")
+            print("Shutting Down...")
             for p in process:
                 p.terminate()
 
     def run_bot(self, shared):
         try:
-            self.start_date = datetime.now()
-            if self.start_action:
-                arg = []
-                for i in self.useful_function['start_action'].param:
-                    if i == 'bot':
-                        arg.append(self)
-                    elif i == 'shared':
-                        arg.append(shared)
-                self.useful_function['start_action'].func(*tuple(arg))
             print('Bot Started')
+            self.started = True
             while True:
                 update = self.get_update()
                 message = self.parse_update(update)
@@ -146,6 +127,18 @@ class Bot:
         except KeyboardInterrupt:
             pass
 
+    def start_bot(self, shared):
+        api_request(self.botKey, 'getMe')  # Check Api and Conncction
+        self.start_date = datetime.now()  # FIXME: check pc time
+        if self.start_action:
+            arg = []
+            for i in self.useful_function['start_action'].param:
+                if i == 'bot':
+                    arg.append(self)
+                elif i == 'shared':
+                    arg.append(shared)
+            self.useful_function['start_action'].func(*tuple(arg))
+
     def run_timer(self, shared):
         timers = []
         for d in self.timers.keys():
@@ -162,8 +155,15 @@ class Bot:
 
     def manage_one_timer(self, delay, func, shared):
         try:
+            parameters = inspect.getfullargspec(func).args
             while True:
-                func()
+                arg = []
+                for j in parameters:
+                    if j == 'bot':
+                        arg.append(self)
+                    elif j == 'shared':
+                        arg.append(shared)
+                func(*tuple(arg))
                 time.sleep(delay)
         except KeyboardInterrupt:
             pass
@@ -171,7 +171,7 @@ class Bot:
     def parse_update(self, update):
         try:
             message = parse_message(update['message'], self)
-        except KeyError as e:
+        except KeyError:
             message = parse_message(update['edited_message'], self)
         return message
 
@@ -180,6 +180,13 @@ class Bot:
         command_name = text_split[0]
         if '@' in text_split[0]:  # if /command@botName
             command_name = text_split[0].split('@')[0]
+        if command_name == '/start' or command_name == '/help':
+            if command_name == '/start' and not self.start_command:
+                default_start(chat, message, self.commands)
+                return
+            if command_name == '/help' and not self.help_command:
+                default_help(chat, self.commands)
+                return
         try:
             parameters = self.commands[command_name].param
         except KeyError:
@@ -188,3 +195,6 @@ class Bot:
         arguments = text_split[1:]
         args = create_parameters_tuple(parameters, self, chat, message, arguments, shared)
         self.commands[command_name].func(*args)
+
+    def set_keyboard(self, buttons, resize=True):
+        self.default_keyboard = create_keyboard(buttons, res=resize)

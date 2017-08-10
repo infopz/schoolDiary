@@ -2,7 +2,7 @@
 # File with the Exception Class
 
 
-class AnotherStatusError(Exception):
+class ApiError(Exception):
     pass
 
 
@@ -10,6 +10,9 @@ class RequestError(Exception):
     pass
 
 
-class DataCreationError(Exception):
+class StopBot(Exception):
     pass
 
+
+class RequestError(Exception):
+    pass
