@@ -46,6 +46,7 @@ def manage_date(message, chat, shared):  # possible input status: newHW, newTest
             return
         if shared['status'] == 'find2':
             find_gave_result(chat, cache, shared)
+            return
         chat.send('Ok, now select a subject:', reply_markup=shared['keyboards']['subj'])
         if shared['status'] == 'newHW':
             shared['status'] = 'newHW2'
@@ -75,10 +76,8 @@ def manage_date(message, chat, shared):  # possible input status: newHW, newTest
         elif status == 'newTest':
             chat.send('The day that you give me is not correct')
             new_test(chat, shared)
-        elif status == 'editDate':
+        elif status == 'editDate' or status == 'find2':
             chat.send('The day that you give me is not correct, retry', reply_markup=shared['keyboards']['this_m_test'])
-        elif status == 'find2':
-
     shared['cache'] = cache
 
 
@@ -163,7 +162,7 @@ def view_manage_date(message, chat, shared):  # TODO: Manage Back
             shared['status'] = 'view2'
 
 
-def view_one(chat, message, shared):
+def view_one(message, chat, shared):
     cache = shared['cache']
     if message.text not in cache['conv_dict']:
         chat.send('Error, please select another one', reply_markup=cache['keyb'])
@@ -207,7 +206,7 @@ def view_one(chat, message, shared):
     shared['cache'] = cache
 
 
-def view_edit_one(chat, message, shared):
+def view_edit_one(message, chat, shared):
     cache = shared['cache']
     possible_options = ['Edit Date', 'Edit Subj', 'Edit Arg', 'Edit Notes', 'Completed']
     if message.text not in possible_options:
@@ -271,14 +270,14 @@ def set_new_subj(chat, cache, shared):
     shared['status'] = ''
 
 
-def set_new_arg(chat, message, shared):
+def set_new_arg(message, chat, shared):
     new_arg = message.text
     row = shared['cache']['row'][1:]
     SQL_function.update_value('Test', row, 'Arguments', new_arg)
     chat.send('Arguments updated')
 
 
-def set_new_notes(chat, message, shared):
+def set_new_notes(message, chat, shared):
     new_notes = message.text
     row = shared['cache']['row']
     if row[0] == 't':
@@ -342,7 +341,7 @@ def find_command(chat, shared):
     shared['status'] = 'find1'
 
 
-def find_ask_date(chat, message, shared):
+def find_ask_date(message, chat, shared):
     options = ['Homeworks', 'Tests', 'Both']
     if message.text not in options:
         keyboard = pzgram.create_keyboard([['Homeworks', 'Tests'], ['Both']], one=True)
@@ -411,33 +410,15 @@ def set_keyboard(shared):  # FIXME: Insert menu and back in all keyb
                            'next_m_c': next_m_c, 'subj': subj}
 
 
-def process_message(message, chat, shared, args):  # FIXME: Do this better, maybe a dict
-    if message.text == 'Menu':
-        chat.send('Select a command:')
-    elif message.text == 'View':
-        view_calendar(chat, shared)
-    elif message.text == 'Find':
-        find_command(chat, shared)
-    elif message.text == 'New Test':
-        new_test(chat, shared)
-    elif message.text == 'New Homework':
-        new_homework(chat, shared)
-    elif shared['status'] == 'newHW' or shared['status'] == 'newTest' or shared['status'] == 'editDate':
-        manage_date(message, chat, shared)
-    elif shared['status'] == 'newHW2' or shared['status'] == 'newTest2' or shared['status'] == 'editSubj':
-        manage_subject(message, chat, shared)
-    elif shared['status'] == 'newHW3' or shared['status'] == 'newTest3':
-        manage_args_notes(message, chat, shared)
-    elif shared['status'] == 'view':
-        view_manage_date(message, chat, shared)
-    elif shared['status'] == 'view2':
-        view_one(chat, message, shared)
-    elif shared['status'] == 'view3':
-        view_edit_one(chat, message, shared)
-    elif shared['status'] == 'editArg':
-        set_new_arg(chat, message, shared)
-    elif shared['status'] == 'editNotes':
-        set_new_notes(chat, message, shared)
+def process_message(message, chat, shared, args):
+    text_dict = shared['text_dict']
+    status_dict = shared['status_dict']
+    if message.text in text_dict:
+        text_dict[message.text](chat, shared)
+    elif shared['status'] in status_dict:
+        status_dict[shared['status']](message, chat, shared)
+    elif message.text == 'Menu':
+        chat.send('Choose a command:')
 
 
 def start_action(shared):
@@ -445,6 +426,13 @@ def start_action(shared):
     shared['cache'] = {}
     shared['subjects'] = {'Math': 'Math', 'Italian': 'Ita', 'English': 'Eng', 'Systems': 'Sys', 'TPS': 'TPS',
                           'History': 'Hist', 'Gymnastic': 'Gym', 'Telecom': 'Tele'}
+    shared['text_dict'] = {'View': view_calendar, 'Find': find_command, 'New Test': new_test,
+                           'New Homework': new_homework}
+    shared['status_dict'] = {'newHW': manage_date, 'newHW2': manage_subject, 'newHW3': manage_args_notes,
+                             'newTest': manage_date, 'newTest2': manage_subject, 'newTest3': manage_args_notes,
+                             'view': view_manage_date, 'view2': view_one, 'view3': view_edit_one,
+                             'editDate': manage_date, 'editSubj': manage_subject, 'editArg': set_new_arg,
+                             'editNotes': set_new_notes, 'find1': find_ask_date, 'find2': manage_date}
 
 bot.set_commands({'/newtest': new_test, '/view': view_calendar, '/newhw': new_homework, '/start': start_command,
                   '/find': find_command})
