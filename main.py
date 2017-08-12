@@ -19,21 +19,23 @@ def start_command(chat, message):
               'This is an [open-source bot](https://github.com/infopz/pzGram_schoolDiary) by @infopz',
               disable_preview=True)
 
+# START /new FUNCTION
+
 
 def new_test(chat, shared):
     chat.send('Select a date:', reply_markup=shared['keyboards']['this_m_test'])
-    shared['data_cache'] = {'conv_dict': shared['keyboards']['this_m_c']}
+    shared['cache'] = {'conv_dict': shared['keyboards']['this_m_c']}
     shared['status'] = 'newTest'
 
 
 def new_homework(chat, shared):
     chat.send('Select a date:', reply_markup=shared['keyboards']['days'])
-    shared['data_cache'] = {'conv_dict': shared['keyboards']['days_c']}
+    shared['cache'] = {'conv_dict': shared['keyboards']['days_c']}
     shared['status'] = 'newHW'
 
 
-def manage_date(message, chat, shared):
-    cache = shared['data_cache']
+def manage_date(message, chat, shared):  # possible input status: newHW, newTest, editDate, find2
+    cache = shared['cache']
     conv_dict = cache['conv_dict']
     month_dict = {'Jan': '01', 'Feb': '02', 'Mar': '03', 'Apr': '04', 'May': '05', 'Jun': '06', 'Jul': '07',
                   'Aug': '08', 'Sep': '09', 'Oct': '10', 'Nov': '11', 'Dec': '12'}
@@ -42,6 +44,8 @@ def manage_date(message, chat, shared):
         if shared['status'] == 'editDate':
             set_new_date(chat, cache, shared)
             return
+        if shared['status'] == 'find2':
+            find_gave_result(chat, cache, shared)
         chat.send('Ok, now select a subject:', reply_markup=shared['keyboards']['subj'])
         if shared['status'] == 'newHW':
             shared['status'] = 'newHW2'
@@ -50,11 +54,11 @@ def manage_date(message, chat, shared):
     elif message.text == 'This Month':
         chat.send('Select a day', reply_markup=shared['keyboards']['this_m'])
         cache['conv_dict'] = shared['keyboards']['this_m_c']
-        shared['data_cache'] = cache
+        shared['cache'] = cache
     elif message.text == 'Next Month':
         chat.send('Select a day', reply_markup=shared['keyboards']['next_m'])
         cache['conv_dict'] = shared['keyboards']['next_m_c']
-        shared['data_cache'] = cache
+        shared['cache'] = cache
     elif message.text == 'Other':
         chat.send('Select a month', reply_markup=shared['keyboards']['all_month'])
     elif message.text in month_dict:
@@ -64,13 +68,22 @@ def manage_date(message, chat, shared):
         chat.send('Now select a day:', reply_markup=keyboard)
         cache['conv_dict'] = conv_dict
     else:
-        chat.send('The day that you give me is not correct')
-        new_homework(chat, shared)
-    shared['data_cache'] = cache
+        status = shared['status']
+        if status == 'newHW':
+            chat.send('The day that you give me is not correct')
+            new_homework(chat, shared)
+        elif status == 'newTest':
+            chat.send('The day that you give me is not correct')
+            new_test(chat, shared)
+        elif status == 'editDate':
+            chat.send('The day that you give me is not correct, retry', reply_markup=shared['keyboards']['this_m_test'])
+        elif status == 'find2':
+
+    shared['cache'] = cache
 
 
 def manage_subject(message, chat, shared):
-    cache = shared['data_cache']
+    cache = shared['cache']
     subjects = shared['subjects']
     for i in subjects:
         if subjects[i] == message.text:
@@ -90,11 +103,11 @@ def manage_subject(message, chat, shared):
         shared['status'] = 'newHW3'
     elif shared['status'] == 'newTest2':
         shared['status'] = 'newTest3'
-    shared['data_cache'] = cache
+    shared['cache'] = cache
 
 
 def manage_args_notes(message, chat, shared):
-    cache = shared['data_cache']
+    cache = shared['cache']
     if shared['status'] == 'newHW3':
         SQL_function.add_new_homework(cache['subject'], cache['date'], message.text)
         chat.send("Homework added to your diary")
@@ -105,8 +118,11 @@ def manage_args_notes(message, chat, shared):
         else:
             SQL_function.add_new_test(cache['subject'], cache['date'], text[0])
         chat.send("Test added to your diary")
-    shared['data_cache'] = {}
+    shared['cache'] = {}
     shared['status'] = ''
+
+# END /new FUNCION
+# START /view FUNCTION
 
 
 def view_calendar(chat, shared):
@@ -143,12 +159,12 @@ def view_manage_date(message, chat, shared):  # TODO: Manage Back
             chat.send(m, reply_markup=keyboard)
         else:
             chat.send(m, reply_markup=k)
-            shared['data_cache'] = {'conv_dict': conv_dict, 'keyb': k}
+            shared['cache'] = {'conv_dict': conv_dict, 'keyb': k}
             shared['status'] = 'view2'
 
 
 def view_one(chat, message, shared):
-    cache = shared['data_cache']
+    cache = shared['cache']
     if message.text not in cache['conv_dict']:
         chat.send('Error, please select another one', reply_markup=cache['keyb'])
         return
@@ -188,11 +204,11 @@ def view_one(chat, message, shared):
         shared['status'] = 'view3'
         cache['keyb'] = keyboard
         cache['row'] = row
-    shared['data_cache'] = cache
+    shared['cache'] = cache
 
 
 def view_edit_one(chat, message, shared):
-    cache = shared['data_cache']
+    cache = shared['cache']
     possible_options = ['Edit Date', 'Edit Subj', 'Edit Arg', 'Edit Notes', 'Completed']
     if message.text not in possible_options:
         chat.send('Error Command, try another', reply_markup=cache['keyb'])
@@ -210,7 +226,7 @@ def view_edit_one(chat, message, shared):
             keyboard = shared['keyboards']['days']
             cache['conv_dict'] = shared['keyboards']['days_c']
         chat.send('Select a new date', reply_markup=keyboard)
-        shared['data_cache'] = cache
+        shared['cache'] = cache
         shared['status'] = 'editDate'
     elif message.text == 'Edit Subj':
         keyboard = shared['keyboards']['subj']
@@ -239,7 +255,7 @@ def set_new_date(chat, cache, shared):
     else:
         SQL_function.update_value('Homework', row[1:], 'Date', date)
     chat.send('Date updated')
-    shared['data_cache'] = {}
+    shared['cache'] = {}
     shared['status'] = ''
 
 
@@ -251,20 +267,20 @@ def set_new_subj(chat, cache, shared):
     else:
         SQL_function.update_value('Homework', row[1:], 'Subject', subj)
     chat.send('Subject updated')
-    shared['data_cache'] = {}
+    shared['cache'] = {}
     shared['status'] = ''
 
 
 def set_new_arg(chat, message, shared):
     new_arg = message.text
-    row = shared['data_cache']['row'][1:]
+    row = shared['cache']['row'][1:]
     SQL_function.update_value('Test', row, 'Arguments', new_arg)
     chat.send('Arguments updated')
 
 
 def set_new_notes(chat, message, shared):
     new_notes = message.text
-    row = shared['data_cache']['row']
+    row = shared['cache']['row']
     if row[0] == 't':
         SQL_function.update_value('Test', row[1:], 'Notes', new_notes)
     else:
@@ -315,6 +331,56 @@ def view_commitments_between(start, stop):
     keyboard = pzgram.create_keyboard(keyboard, one=True)
     return s, keyboard, conv_dict
 
+# END /view FUNCTION
+# START /find FUNCTION
+
+
+def find_command(chat, shared):
+    keyboard = pzgram.create_keyboard([['Homeworks', 'Tests'], ['Both']], one=True)
+    chat.send('Select wich type of commitments you want to find:', reply_markup=keyboard)
+    shared['cache'] = {}
+    shared['status'] = 'find1'
+
+
+def find_ask_date(chat, message, shared):
+    options = ['Homeworks', 'Tests', 'Both']
+    if message.text not in options:
+        keyboard = pzgram.create_keyboard([['Homeworks', 'Tests'], ['Both']], one=True)
+        chat.send("Select a type from the keyboard:", reply_markup=keyboard)
+        return
+    cache = shared['cache']
+    cache['option'] = message.text
+    chat.send('Now select a date:', reply_markup=shared['keyboards']['this_m_test'])
+    cache['conv_dict'] = shared['keyboards']['this_m_c']
+    shared['status'] = 'find2'
+    shared['cache'] = cache
+
+
+def find_gave_result(chat, cache, shared):
+    date = cache['date']
+    test, hw = SQL_function.find_one_day(date)
+    if not len(test) and not len(hw):  # if nothing
+        chat.send("You don't have nothing for this day")
+        return
+    m = "Here's your commintments:\n"
+    if len(test):
+        for t in test:
+            m += '*'+t[1]+"'s Test*\n"
+            m += t[2]+'\n'
+            if t[3] is not None:
+                m += t[3]+'\n'
+    if len(hw):
+        for h in hw:
+            m += '*' + h[1] + "'s Homeworkt*\n"
+            m += t[2] + '\n'
+            if t[3]:
+                m += '_Completed_' + '\n'
+    chat.send(m)
+    shared['status'] = ''
+    shared['cache'] = {}
+
+# END /fine FUNCTION
+
 
 def allert_timer(bot):
     h = datetime.now().strftime('%H')
@@ -350,6 +416,8 @@ def process_message(message, chat, shared, args):  # FIXME: Do this better, mayb
         chat.send('Select a command:')
     elif message.text == 'View':
         view_calendar(chat, shared)
+    elif message.text == 'Find':
+        find_command(chat, shared)
     elif message.text == 'New Test':
         new_test(chat, shared)
     elif message.text == 'New Homework':
@@ -374,12 +442,13 @@ def process_message(message, chat, shared, args):  # FIXME: Do this better, mayb
 
 def start_action(shared):
     shared['status'] = ''
-    shared['data_cache'] = {}
+    shared['cache'] = {}
     shared['subjects'] = {'Math': 'Math', 'Italian': 'Ita', 'English': 'Eng', 'Systems': 'Sys', 'TPS': 'TPS',
                           'History': 'Hist', 'Gymnastic': 'Gym', 'Telecom': 'Tele'}
 
-bot.set_commands({'/newtest': new_test, '/view': view_calendar, '/newhw': new_homework, '/start': start_command})
+bot.set_commands({'/newtest': new_test, '/view': view_calendar, '/newhw': new_homework, '/start': start_command,
+                  '/find': find_command})
 bot.set_function({'start_action': start_action, 'after_division': process_message})
 bot.set_timers({7200: allert_timer, 43200: set_keyboard})
-bot.set_keyboard([['View'], ['New Test', 'New Homework']])
+bot.set_keyboard([['View', 'Find'], ['New Test', 'New Homework']])
 bot.run()
