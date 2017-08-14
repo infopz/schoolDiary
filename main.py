@@ -35,6 +35,8 @@ def new_homework(chat, shared):
 
 
 def manage_date(message, chat, shared):  # possible input status: newHW, newTest, editDate, find2
+    k_hist = shared['k_hist']
+    c_hist = shared['c_hist']
     cache = shared['cache']
     conv_dict = cache['conv_dict']
     month_dict = {'Jan': '01', 'Feb': '02', 'Mar': '03', 'Apr': '04', 'May': '05', 'Jun': '06', 'Jul': '07',
@@ -47,6 +49,9 @@ def manage_date(message, chat, shared):  # possible input status: newHW, newTest
         if shared['status'] == 'find2':
             find_gave_result(chat, cache, shared)
             return
+        if shared['status'] == 'newVote2':
+            new_vote_date(chat, cache, shared)
+            return
         chat.send('Ok, now select a subject:', reply_markup=shared['keyboards']['subj'])
         if shared['status'] == 'newHW':
             shared['status'] = 'newHW2'
@@ -56,19 +61,46 @@ def manage_date(message, chat, shared):  # possible input status: newHW, newTest
         chat.send('Select a day', reply_markup=shared['keyboards']['this_m'])
         cache['conv_dict'] = shared['keyboards']['this_m_c']
         shared['cache'] = cache
+        k_hist.append('this_m')
+        c_hist.append('this_m_c')
     elif message.text == 'Next Month':
         chat.send('Select a day', reply_markup=shared['keyboards']['next_m'])
         cache['conv_dict'] = shared['keyboards']['next_m_c']
         shared['cache'] = cache
+        k_hist.append('next_m')
+        c_hist.append('newxt_m_c')
     elif message.text == 'Other':
         chat.send('Select a month', reply_markup=shared['keyboards']['all_month'])
+        k_hist.append('all_month')
+        c_hist.append('')
     elif message.text in month_dict:
         month = month_dict[message.text]
         key_list, conv_dict = useful_function.create_month_keyboard(month)
         keyboard = pzgram.create_keyboard(key_list, one=True)
         chat.send('Now select a day:', reply_markup=keyboard)
         cache['conv_dict'] = conv_dict
-    else:
+        k_hist.append('')
+        c_hist.append('')
+    elif message.text == 'Prev Month':
+        this_m = int(datetime.now().month)
+        if this_m == 1:
+            prev = 12
+        else:
+            prev = this_m-1
+        key_list, conv_dict = useful_function.create_month_keyboard(prev)
+        keyboard = pzgram.create_keyboard(key_list, one=True)
+        chat.send('Select a day:', reply_markup=keyboard)
+        cache['conv_dict'] = conv_dict
+        k_hist.append('')
+        c_hist.append('')
+    elif message.text == 'Back':
+        if len(k_hist) > 1:
+            k_hist.pop()
+            exec("chat.send('Select a day:', reply_markup=shared['keyboards]['"+k_hist[-1]+"'])")
+            c_hist.pop()
+            if c_hist[-1] != '':
+                exec("cache['conv_dict] = shared['keyboards]['"+c_hist[-1]+"']")
+    else:  # FIXME: reset conv_dict
         status = shared['status']
         if status == 'newHW':
             chat.send('The day that you give me is not correct')
@@ -78,6 +110,10 @@ def manage_date(message, chat, shared):  # possible input status: newHW, newTest
             new_test(chat, shared)
         elif status == 'editDate' or status == 'find2':
             chat.send('The day that you give me is not correct, retry', reply_markup=shared['keyboards']['this_m_test'])
+        elif status == 'newVote2':
+            chat.send('The day that you give me is not correct, retry', reply_markup=shared['keyboards']['this_m_vote'])
+    shared['k_hist'] = k_hist
+    shared['c_hist'] = c_hist
     shared['cache'] = cache
 
 
@@ -97,7 +133,7 @@ def manage_subject(message, chat, shared):
     s = 'Ok, last step, send me the notes about this homework:'
     if shared['status'] == 'newTest2':
         s = 'Ok, last step, send me the arguments of this test'
-    chat.send(s, reply_markup=json.dumps({'remove_keyboard': True}))
+    chat.send(s, no_keyboard=True)
     if shared['status'] == 'newHW2':
         shared['status'] = 'newHW3'
     elif shared['status'] == 'newTest2':
@@ -234,10 +270,10 @@ def view_edit_one(message, chat, shared):
     elif message.text == 'Edit Arg':
         if c_type == 'hw':
             return
-        chat.send('Give me the new arguments', reply_markup=json.dumps({'remove_keyboard': True}))
+        chat.send('Give me the new arguments', no_keyboard=True)
         shared['status'] = 'editArg'
     elif message.text == 'Edit Notes':
-        chat.send('Give me the new notes', reply_markup=json.dumps({'remove_keyboard': True}))
+        chat.send('Give me the new notes', no_keyboard=True)
         shared['status'] = 'editNotes'
     elif message.text == 'Completed':
         if c_type == 'test':
@@ -378,7 +414,66 @@ def find_gave_result(chat, cache, shared):
     shared['status'] = ''
     shared['cache'] = {}
 
-# END /fine FUNCTION
+# END /find FUNCTIONS
+# START /newvote FUNCTIONS
+
+
+def new_vote_command(chat, shared):
+    shared['status'] = 'newVote'
+    shared['cache'] = {}
+    chat.send('Write me the vote:', no_keyboard=True)
+
+
+def new_vote_number(message, chat, shared):
+    cache = shared['cache']
+    try:
+        cache['number'] = float(message.text)
+    except ValueError:
+        chat.send('The number inserted was not correct')
+        new_vote_command(chat, shared)
+        return
+    chat.send('Now send me the date of this test', reply_markup=shared['keyboards']['this_m_test'])
+    cache['conv_dict'] = shared['keyboards']['this_m_c']
+    shared['status'] = 'newVote2'
+    shared['cache'] = cache
+
+
+def new_vote_date(chat, cache, shared):
+    chat.send('Ok, now send me the subject', reply_markup=shared['keyboards']['subj'])
+    shared['cache'] = cache
+    shared['status'] = 'newVote3'
+
+
+def new_vote_subj(message, chat, shared):
+    subj = shared['subjects']
+    cache = shared['cache']
+    if message.text not in subj.values():
+        for i in subj:
+            if subj[i] == message.text:
+                cache['subject'] = i
+                break
+        else:
+            chat.send('The subject that you chose is not correct, retry')
+            chat.send("Select the subject:", reply_markup=shared['keyboards']['subj'])
+            return
+    keyboard = pzgram.create_keyboard([['Yes', 'No']], one=True)
+    chat.send('Did you want to add some notes to this vote?', reply_markup=keyboard)
+    shared['cache'] = cache
+    shared['status'] = 'newVote4'
+
+
+def new_vote_notes1(message, chat, shared):
+    if message.text not in ['Yes', 'No']:
+        chat.send('You only answer me with *yes* or *no*')
+        keyboard = pzgram.create_keyboard([['Yes', 'No']], one=True)
+        chat.send('Did you want to add some notes to this vote?', reply_markup=keyboard)
+    if message
+
+
+def new_vote_add(message, chat, shared):
+    pass
+
+# END /newvote FUNCTIONS
 
 
 def allert_timer(bot):
@@ -389,7 +484,7 @@ def allert_timer(bot):
             pzgram.Chat(20403805, bot).send(s)
 
 
-def set_keyboard(shared):  # FIXME: Insert menu and back in all keyb
+def set_keyboard(shared):  # FIXME: Insert menu and back in all keyb # FIXME: Insert prev month keyb
     month = int(datetime.now().strftime('%m'))
     days_l, days_c = useful_function.create_hw_keyboard()  # 'Default Keyboard'
     this_m_l, this_m_c = useful_function.create_this_month_keyboard()  # All days of this m
@@ -398,6 +493,9 @@ def set_keyboard(shared):  # FIXME: Insert menu and back in all keyb
     this_m = pzgram.create_keyboard(this_m_l, one=True)
     this_m_test_l = this_m_l.copy()
     this_m_test_l.append(['Next Month', 'Other'])
+    this_m_vote_l = this_m_l.copy()
+    this_m_vote_l.append(['Prev Month', 'Other'])
+    this_m_vote = pzgram.create_keyboard(this_m_vote_l, one=True)
     this_m_test = pzgram.create_keyboard(this_m_test_l, one=True)  # Like this month, whit buttons
     next_m = pzgram.create_keyboard(next_m_l, one=True)
     all_month = pzgram.create_keyboard(useful_function.create_all_month_keyboard(), one=True)
@@ -407,7 +505,7 @@ def set_keyboard(shared):  # FIXME: Insert menu and back in all keyb
     subj = pzgram.create_keyboard(subj, one=False)
     shared['keyboards'] = {'days': days, 'this_m': this_m, 'next_m': next_m, 'all_month': all_month,
                            'this_m_test': this_m_test, 'days_c': days_c, 'this_m_c': this_m_c,
-                           'next_m_c': next_m_c, 'subj': subj}
+                           'next_m_c': next_m_c, 'subj': subj, 'this_m_vote': this_m_vote}
 
 
 def process_message(message, chat, shared, args):
@@ -427,16 +525,19 @@ def start_action(shared):
     shared['subjects'] = {'Math': 'Math', 'Italian': 'Ita', 'English': 'Eng', 'Systems': 'Sys', 'TPS': 'TPS',
                           'History': 'Hist', 'Gymnastic': 'Gym', 'Telecom': 'Tele'}
     shared['text_dict'] = {'View': view_calendar, 'Find': find_command, 'New Test': new_test,
-                           'New Homework': new_homework}
+                           'New Homework': new_homework, 'New Vote': new_vote_command}
     shared['status_dict'] = {'newHW': manage_date, 'newHW2': manage_subject, 'newHW3': manage_args_notes,
                              'newTest': manage_date, 'newTest2': manage_subject, 'newTest3': manage_args_notes,
                              'view': view_manage_date, 'view2': view_one, 'view3': view_edit_one,
                              'editDate': manage_date, 'editSubj': manage_subject, 'editArg': set_new_arg,
-                             'editNotes': set_new_notes, 'find1': find_ask_date, 'find2': manage_date}
+                             'editNotes': set_new_notes, 'find1': find_ask_date, 'find2': manage_date,
+                             'newVote2': manage_date, 'newVote3': new_vote_subj}
+    shared['k_hist'] = []
+    shared['c_hist'] = []
 
 bot.set_commands({'/newtest': new_test, '/view': view_calendar, '/newhw': new_homework, '/start': start_command,
-                  '/find': find_command})
+                  '/find': find_command, '/newvotes': new_vote_command})
 bot.set_function({'start_action': start_action, 'after_division': process_message})
 bot.set_timers({7200: allert_timer, 43200: set_keyboard})
-bot.set_keyboard([['View', 'Find'], ['New Test', 'New Homework']])
+bot.set_keyboard([['View', 'Find'], ['New Test', 'New Homework'], ['New Vote']])
 bot.run()

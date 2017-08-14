@@ -171,7 +171,7 @@ class Bot:
     def parse_update(self, update):
         try:
             message = parse_message(update['message'], self)
-        except KeyError:
+        except KeyError:  # FIXME: do this better
             message = parse_message(update['edited_message'], self)
         return message
 

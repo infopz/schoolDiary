@@ -66,7 +66,9 @@ class Chat:
                 exec('self.'+i+'=None')
 
     def send(self, text, parse_mode="Markdown", disable_preview=False, disable_notification=False,
-             reply=None, reply_markup=None):
+             reply=None, reply_markup=None, no_keyboard=False):
+        if not no_keyboard:
+            reply_markup = json.dumps({'remove_keyboard': True})
         if reply_markup is None:
             reply_markup = self.bot.default_keyboard
         parameter = {

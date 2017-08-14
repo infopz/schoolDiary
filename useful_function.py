@@ -121,7 +121,7 @@ def create_month_keyboard(month):
         button = d_week + ' ' + str(i)
         keyboard[row].append(button)
         conversion_dict[button] = day.strftime('%m%d')
-    return keyboard, conversion_dict
+    return keyboard, conversion_dict  # FIXME: return the jsoned keyboard, not the list
 
 
 def create_this_month_keyboard():
