@@ -26,6 +26,16 @@ def add_new_homework(subj, date, notes):
         cur.execute(f"INSERT INTO Homework VALUES ('{subj}', '{date}', '{notes}', 0)")
 
 
+def add_new_vote(num, subj, date, notes=None):
+    con = sqlite3.connect('diary.db')
+    with con:
+        cur = con.cursor()
+        if notes is None:
+            cur.execute(f"INSERT INTO Test(Vote, Subject, Date) VALUES ('{num}', '{subj}', '{date}')")
+        else:
+            cur.execute(f"INSERT INTO Test VALUES ('{number}', '{subj}', '{date}', '{notes}')")
+
+
 def find_one_day(date):
     con = sqlite3.connect('diary.db')
     with con:
@@ -65,3 +75,33 @@ def update_value(table, rowid, column, new_value):
             cur.execute(f"UPDATE {table} SET {column} = {new_value} WHERE ROWID = {rowid}")
         else:
             cur.execute(f"UPDATE {table} SET {column} = '{new_value}' WHERE ROWID = {rowid}")
+
+
+def get_vote_date():  # FIXME: manage the changing of years
+    con = sqlite3.connect('diary.db')
+    with con:
+        cur = con.cursor()
+        cur.execute("SELECT * FROM Votes ORDER BY Date ASC")
+        votes = cur.fetchall()
+    return votes
+
+
+def get_vote_subj(subj):
+    con = sqlite3.connect('diary.db')
+    with con:
+        cur = con.cursor()
+        cur.execute(f"SELECT Vote, Type, Date, Notes FROM Votes WHERE Subject = '{subj}'")
+        rows = cur.fetchall()
+    return rows
+
+
+def get_average(type): # True: with Type, False: all votes
+    con = sqlite3.connect('diary.db')
+    with con:
+        cur = con.cursor()
+        if type:
+            cur.execute("SELECT AVG(Vote), Subject, Type FROM Votes GROUP BY Subject, Type")
+        else:
+            cur.execute("SELECT AVG(Vote), Subject FROM Votes GROUP BY Subject")
+        avg = cur.fetchall()
+    return avg

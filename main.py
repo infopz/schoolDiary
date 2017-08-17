@@ -447,33 +447,136 @@ def new_vote_date(chat, cache, shared):
 def new_vote_subj(message, chat, shared):
     subj = shared['subjects']
     cache = shared['cache']
-    if message.text not in subj.values():
-        for i in subj:
-            if subj[i] == message.text:
-                cache['subject'] = i
-                break
-        else:
-            chat.send('The subject that you chose is not correct, retry')
-            chat.send("Select the subject:", reply_markup=shared['keyboards']['subj'])
-            return
-    keyboard = pzgram.create_keyboard([['Yes', 'No']], one=True)
-    chat.send('Did you want to add some notes to this vote?', reply_markup=keyboard)
+    for i in subj:
+        if subj[i] == message.text:
+            cache['subject'] = i
+            break
+    else:
+        chat.send('The subject that you chose is not correct, retry')
+        chat.send("Select the subject:", reply_markup=shared['keyboards']['subj'])
+        return
+    keyboard = pzgram.create_keyboard([['Written', 'Oral'], ['Practice']], one=True)
+    chat.send('Select the kind of this vote:', reply_markup=keyboard)
     shared['cache'] = cache
     shared['status'] = 'newVote4'
 
 
-def new_vote_notes1(message, chat, shared):
+def new_vote_type(message, chat, shared):
+    if message.text not in ['Written', 'Oral', 'Practice']:
+        keyboard = pzgram.create_keyboard([['Written', 'Oral'], ['Practice']], one=True)
+        chat.send('Select the kind of this vote:', reply_markup=keyboard)
+        return
+    cache = shared['cache']
+    cache['type'] = message.text
+    keyboard = pzgram.create_keyboard([['Yes', 'No']], one=True)
+    chat.send('Do you want to add some notes to this vote?', reply_markup=keyboard)
+    shared['cache'] = cache
+    shared['status'] = 'newVote5'
+
+
+def new_vote_notes_ask(message, chat, shared):
     if message.text not in ['Yes', 'No']:
         chat.send('You only answer me with *yes* or *no*')
         keyboard = pzgram.create_keyboard([['Yes', 'No']], one=True)
-        chat.send('Did you want to add some notes to this vote?', reply_markup=keyboard)
-    if message
+        chat.send('Do you want to add some notes to this vote?', reply_markup=keyboard)
+        return
+    if message.text == 'Yes':
+        chat.send('Ok, send me the notes to attach at this vote', no_keyboard = True)
+        shared['status'] = 'newVote6'
+    else:
+        cache = shared['cache']
+        SQL_function.add_new_vote(cache['number'], cache['subject'], cache['date'])
+        chat.send('Vote added')
+        shared['status'] = ''
 
 
-def new_vote_add(message, chat, shared):
-    pass
+def new_vote_notes_receive(message, chat, shared):
+    cache = shared['cache']
+    SQL_function.add_new_vote(cache['number'], cache['subject'], cache['date'], message.text)
+    chat.send('Vote added')
+    shared['status'] = ''
 
 # END /newvote FUNCTIONS
+# START /viewvotes FUNCTIONS
+
+
+def view_vote_command(chat, shared):
+    keyboard = pzgram.create_keyboard([['Date', 'Subject'], ['Average']])
+    chat.send('Select an option:', reply_markup=keyboard)
+    shared['status'] = 'viewVotes'
+
+
+def view_vote_answer(message, chat, shared):
+    if message.text not in ['Date', 'Subject', 'Average']:
+        keyboard = pzgram.create_keyboard([['Date', 'Subject'], ['Average']])
+        chat.send('You give me a bad answer, please select an option:', reply_markup=keyboard)
+        return
+    if message.text == 'Date':
+        convert_type = {'Practice': 'P', 'Oral': 'O', 'Written': 'W'}
+        votes = SQL_function.get_vote_date()
+        m = "Here's your votes:\n"
+        for i in votes:
+            subj = i[1]
+            subj = shared['subject'][subj]
+            m += f'{i[0]} - {subj} {convert_type[i[4]]} - {i[2][0:2]}\{i[2][2:4]}\n'
+        chat.send(m)
+        shared['status'] = ''
+        shared['cache'] = {}
+    elif message.text == 'Subject':
+        chat.send('Select a subject', reply_markup=shared['keyboards']['subj'])
+        shared['status'] = 'viewVotesSubj'
+    else:
+        keyboard = pzgram.create_keyboard([['With Type', 'All votes']])
+        chat.send('Select a type:', reply_markup=keyboard)
+        shared['status'] = 'viewVotesAvg'
+
+
+def view_vote_subj(message, chat, shared):
+    subj = shared['subject']
+    for i in subj:
+        if subj[i] == message.text:
+            sel_subject = i
+            break
+    else:
+        chat.send('The subject that you chose is not correct, retry')
+        chat.send("Select the subject:", reply_markup=shared['keyboards']['subj'])
+        return
+    votes = SQL_function.get_vote_subj(sel_subject)
+    if len(votes):
+        convert_type = {'Practice': 'Pr', 'Oral': 'Or', 'Written': 'Wr'}
+        m = ''
+        for v in votes:
+            m += f'{i[0]} -  {convert_type[i[1]]} - {i[2][0:2]}\{i[2][2:4]}\n'
+            if i[3] is not None:
+                m += '   ' + i[3] + '\n'
+    else:
+        chat.send('You have no vote for this subject')
+    shared['status'] = ''
+    shared['cache'] = {}
+
+
+def view_vote_average(message, chat, shared):
+    if message.text not in ['With Type', 'All votes']:
+        keyboard = pzgram.create_keyboard([['With Type', 'All votes']])
+        chat.send('Please, select a valid type:', reply_markup=keyboard)
+        return
+    if message.text == 'With Type':
+        avg = SQL_function.get_average(True)
+        convert_type = {'Practice': 'Pr', 'Oral': 'Or', 'Written': 'Wr'}
+        m = "Here's your averages:"
+        for i in avg:
+            m += i[0] + ' - ' + shared['subject'][i[1]] + ' ' + convert_type[i[2]] + '\n'
+        chat.send(m)
+    else:
+        avg = SQL_function.get_average(False)
+        m = "Here's your averages:"
+        for i in avg:
+            m += i[0] + ' - ' + shared['subject'][i[1]] + ' ' + '\n'
+        chat.send(m)
+    shared['status'] = ''
+    shared['cache'] = ''
+
+# END /viewvotes FUNCTIONS
 
 
 def allert_timer(bot):
@@ -517,6 +620,7 @@ def process_message(message, chat, shared, args):
         status_dict[shared['status']](message, chat, shared)
     elif message.text == 'Menu':
         chat.send('Choose a command:')
+        shared['status'] = ''
 
 
 def start_action(shared):
@@ -525,19 +629,22 @@ def start_action(shared):
     shared['subjects'] = {'Math': 'Math', 'Italian': 'Ita', 'English': 'Eng', 'Systems': 'Sys', 'TPS': 'TPS',
                           'History': 'Hist', 'Gymnastic': 'Gym', 'Telecom': 'Tele'}
     shared['text_dict'] = {'View': view_calendar, 'Find': find_command, 'New Test': new_test,
-                           'New Homework': new_homework, 'New Vote': new_vote_command}
+                           'New Homework': new_homework, 'New Vote': new_vote_command, 'View Vote': view_vote_command}
     shared['status_dict'] = {'newHW': manage_date, 'newHW2': manage_subject, 'newHW3': manage_args_notes,
                              'newTest': manage_date, 'newTest2': manage_subject, 'newTest3': manage_args_notes,
                              'view': view_manage_date, 'view2': view_one, 'view3': view_edit_one,
                              'editDate': manage_date, 'editSubj': manage_subject, 'editArg': set_new_arg,
                              'editNotes': set_new_notes, 'find1': find_ask_date, 'find2': manage_date,
-                             'newVote2': manage_date, 'newVote3': new_vote_subj}
+                             'newVote2': manage_date, 'newVote3': new_vote_subj, 'newVote4': new_vote_type,
+                             'newVote5': new_vote_notes_ask, 'newVote6': new_vote_notes_receive,
+                             'viewVotes': view_vote_answer, 'viewVotesSubj': view_vote_subj,
+                             'viewVotesAvg': view_vote_average}
     shared['k_hist'] = []
     shared['c_hist'] = []
 
 bot.set_commands({'/newtest': new_test, '/view': view_calendar, '/newhw': new_homework, '/start': start_command,
-                  '/find': find_command, '/newvotes': new_vote_command})
+                  '/find': find_command, '/newvotes': new_vote_command, '/viewvotes': view_vote_command})
 bot.set_function({'start_action': start_action, 'after_division': process_message})
 bot.set_timers({7200: allert_timer, 43200: set_keyboard})
-bot.set_keyboard([['View', 'Find'], ['New Test', 'New Homework'], ['New Vote']])
+bot.set_keyboard([['View', 'Find'], ['New Test', 'New Homework'], ['New Vote', 'View Vote']])
 bot.run()
