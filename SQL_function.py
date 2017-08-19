@@ -26,14 +26,14 @@ def add_new_homework(subj, date, notes):
         cur.execute(f"INSERT INTO Homework VALUES ('{subj}', '{date}', '{notes}', 0)")
 
 
-def add_new_vote(num, subj, date, notes=None):
+def add_new_vote(num, subj, typ, date, notes=None):
     con = sqlite3.connect('diary.db')
     with con:
         cur = con.cursor()
         if notes is None:
-            cur.execute(f"INSERT INTO Test(Vote, Subject, Date) VALUES ('{num}', '{subj}', '{date}')")
+            cur.execute(f"INSERT INTO Votes(Vote, Subject, Type, Date) VALUES ('{num}', '{subj}', '{typ}', '{date}')")
         else:
-            cur.execute(f"INSERT INTO Test VALUES ('{number}', '{subj}', '{date}', '{notes}')")
+            cur.execute(f"INSERT INTO Votes VALUES ('{num}', '{subj}', '{date}', '{notes}')")
 
 
 def find_one_day(date):
@@ -95,11 +95,11 @@ def get_vote_subj(subj):
     return rows
 
 
-def get_average(type): # True: with Type, False: all votes
+def get_average(typ):  # True: with Type, False: all votes
     con = sqlite3.connect('diary.db')
     with con:
         cur = con.cursor()
-        if type:
+        if typ:
             cur.execute("SELECT AVG(Vote), Subject, Type FROM Votes GROUP BY Subject, Type")
         else:
             cur.execute("SELECT AVG(Vote), Subject FROM Votes GROUP BY Subject")

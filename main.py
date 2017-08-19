@@ -1,5 +1,4 @@
 import pzgram
-import json
 from datetime import datetime, timedelta
 
 import SQL_function
@@ -481,18 +480,18 @@ def new_vote_notes_ask(message, chat, shared):
         chat.send('Do you want to add some notes to this vote?', reply_markup=keyboard)
         return
     if message.text == 'Yes':
-        chat.send('Ok, send me the notes to attach at this vote', no_keyboard = True)
+        chat.send('Ok, send me the notes to attach at this vote', no_keyboard=True)
         shared['status'] = 'newVote6'
     else:
         cache = shared['cache']
-        SQL_function.add_new_vote(cache['number'], cache['subject'], cache['date'])
+        SQL_function.add_new_vote(cache['number'], cache['subject'], cache['type'], cache['date'])
         chat.send('Vote added')
         shared['status'] = ''
 
 
 def new_vote_notes_receive(message, chat, shared):
     cache = shared['cache']
-    SQL_function.add_new_vote(cache['number'], cache['subject'], cache['date'], message.text)
+    SQL_function.add_new_vote(cache['number'], cache['subject'], cache['type'], cache['date'], message.text)
     chat.send('Vote added')
     shared['status'] = ''
 
@@ -517,7 +516,7 @@ def view_vote_answer(message, chat, shared):
         m = "Here's your votes:\n"
         for i in votes:
             subj = i[1]
-            subj = shared['subject'][subj]
+            subj = shared['subjects'][subj]
             m += f'{i[0]} - {subj} {convert_type[i[4]]} - {i[2][0:2]}\{i[2][2:4]}\n'
         chat.send(m)
         shared['status'] = ''
@@ -532,7 +531,7 @@ def view_vote_answer(message, chat, shared):
 
 
 def view_vote_subj(message, chat, shared):
-    subj = shared['subject']
+    subj = shared['subjects']
     for i in subj:
         if subj[i] == message.text:
             sel_subject = i
@@ -546,9 +545,9 @@ def view_vote_subj(message, chat, shared):
         convert_type = {'Practice': 'Pr', 'Oral': 'Or', 'Written': 'Wr'}
         m = ''
         for v in votes:
-            m += f'{i[0]} -  {convert_type[i[1]]} - {i[2][0:2]}\{i[2][2:4]}\n'
+            m += f'{v[0]} -  {convert_type[v[1]]} - {v[2][0:2]}\{v[2][2:4]}\n'
             if i[3] is not None:
-                m += '   ' + i[3] + '\n'
+                m += '   ' + v[3] + '\n'
     else:
         chat.send('You have no vote for this subject')
     shared['status'] = ''
@@ -612,15 +611,16 @@ def set_keyboard(shared):  # FIXME: Insert menu and back in all keyb # FIXME: In
 
 
 def process_message(message, chat, shared, args):
+    print(message.text)
     text_dict = shared['text_dict']
     status_dict = shared['status_dict']
-    if message.text in text_dict:
+    if message.text == 'Menu':
+        chat.send('Choose a command:')
+        shared['status'] = ''
+    elif message.text in text_dict:
         text_dict[message.text](chat, shared)
     elif shared['status'] in status_dict:
         status_dict[shared['status']](message, chat, shared)
-    elif message.text == 'Menu':
-        chat.send('Choose a command:')
-        shared['status'] = ''
 
 
 def start_action(shared):
@@ -638,7 +638,7 @@ def start_action(shared):
                              'newVote2': manage_date, 'newVote3': new_vote_subj, 'newVote4': new_vote_type,
                              'newVote5': new_vote_notes_ask, 'newVote6': new_vote_notes_receive,
                              'viewVotes': view_vote_answer, 'viewVotesSubj': view_vote_subj,
-                             'viewVotesAvg': view_vote_average}
+                             'viewVotesAvg': view_vote_average, 'newVote': new_vote_number}
     shared['k_hist'] = []
     shared['c_hist'] = []
 
