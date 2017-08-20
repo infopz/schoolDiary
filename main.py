@@ -579,9 +579,13 @@ def view_vote_average(message, chat, shared):
 # END /viewvotes FUNCTIONS
 # START /loadtimes FUNCTIONS
 
-def load_times():
-    time = json.load('times.json')
-    
+def load_times(chat, shared):
+    try:
+        shared['times'] = SQL_function.load_times()
+        chat.send('School Times loaded')
+    except Exception as e:
+        print('Error while loading - ' + str(e))
+
 # END /loadtimes FUNCTIONS
 
 

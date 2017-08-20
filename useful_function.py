@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+import json
 import SQL_function
 
 
@@ -159,3 +160,7 @@ def create_all_month_keyboard():
         else:
             keyboard[i//4].append(month_list[month + i])
     return keyboard
+
+
+def load_times():
+    return json.loads(open('times.json', 'r').read())
