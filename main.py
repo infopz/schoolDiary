@@ -1,4 +1,5 @@
 import pzgram
+import json
 from datetime import datetime, timedelta
 
 import SQL_function
@@ -576,6 +577,12 @@ def view_vote_average(message, chat, shared):
     shared['cache'] = ''
 
 # END /viewvotes FUNCTIONS
+# START /loadtimes FUNCTIONS
+
+def load_times():
+    time = json.load('times.json')
+    
+# END /loadtimes FUNCTIONS
 
 
 def allert_timer(bot):

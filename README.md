@@ -25,11 +25,11 @@ This bot allows you to manage your tests and homeworks easly.
 The main featues are:
 * Storing your homeworks and tests
 * Viewing and Editing your commitments
-* Remind your upcoiming homeworks and tests
+* Remind your upcoming homeworks and tests
 * Register your vote and view them by Date, Subject and their average
 
 ## Upcoming features
 * Support for school time
 * Integration with ClasseViva API
-* Itegration with Conofy to add commitments also on my iPhone Calendar
+* Integration with Conofy to add commitments also on my iPhone Calendar
 * Bring pzGram to a beta version adding the support for all type of message and groups

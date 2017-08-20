@@ -1,0 +1,40 @@
+{
+  "days": [
+    {
+      "hours": 5,
+      "subjects": [
+        "Math", "History", "Systems", "Systems", "TPS"
+        ]
+    },
+    {
+      "hours": 5,
+      "subjects": [
+        "Italian", "Telecom", "Telecom", "Gymnastic", "Gymnastic"
+        ]
+    },
+    {
+      "hours": 5,
+      "subjects": [
+        "Italian", "Telecom", "Telecom", "Gymnastic", "Gymnastic"
+        ]
+    },
+    {
+      "hours": 7,
+      "subjects": [
+        "Italian", "Telecom", "Telecom", "Gymnastic", "Gymnastic", "Systems", "Systems"
+        ]
+    },
+    {
+      "hours": 5,
+      "subjects": [
+        "Italian", "Telecom", "Telecom", "Gymnastic", "Gymnastic"
+        ]
+    },
+    {
+      "hours": 5,
+      "subjects": [
+        "Italian", "Telecom", "Telecom", "Gymnastic", "Gymnastic"
+        ]
+    }
+  ]
+}
