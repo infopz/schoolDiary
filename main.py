@@ -9,7 +9,7 @@ bot = pzgram.Bot(apiKey.apiBot)
 
 # IDEA
 # TODO: MORE EMOJI!!!!!
-# Completed Emoji
+# Completed Emoji, Back Emoji, Subjects Emoji, Menu Emoji
 
 
 def start_command(chat, message):
@@ -33,7 +33,7 @@ def new_homework(chat, shared):
     shared['status'] = 'newHW'
 
 
-def manage_date(message, chat, shared):  # possible input status: newHW, newTest, editDate, find2
+def manage_date(message, chat, shared):  # possible input status: newHW, newTest, editDate, find2, newVote2
     k_hist = shared['k_hist']
     c_hist = shared['c_hist']
     cache = shared['cache']
@@ -483,7 +483,7 @@ def new_vote_date(chat, cache, shared):
 def new_vote_subj(message, chat, shared):
     if message.text == 'Back':
         chat.send('Now send me the date of this test', reply_markup=shared['keyboards']['this_m_test'])
-        cache['conv_dict'] = shared['keyboards']['this_m_c']
+        shared['cache']['conv_dict'] = shared['keyboards']['this_m_c']
         shared['status'] = 'newVote2'
         return
     subj = shared['subjects']
@@ -551,7 +551,7 @@ def view_vote_command(chat, shared):
     shared['status'] = 'viewVotes'
 
 
-def view_vote_answer(message, chat, shared):  # FIXME: check colum order
+def view_vote_answer(message, chat, shared):
     if message.text == 'Back':
         chat.send('Choose a command:')
         return
@@ -564,9 +564,9 @@ def view_vote_answer(message, chat, shared):  # FIXME: check colum order
         votes = SQL_function.get_vote_date()
         m = "Here's your votes:\n"
         for i in votes:
-            subj = i[1]
+            subj = i[2]
             subj = shared['subjects'][subj]
-            m += f'{i[0]} - {subj} {convert_type[i[4]]} - {i[2][0:2]}\{i[2][2:4]}\n'
+            m += f'{i[0]} - {subj} {convert_type[i[3]]} - {i[1][0:2]}\{i[1][2:4]}\n'
         chat.send(m)
         shared['status'] = ''
         shared['cache'] = {}
