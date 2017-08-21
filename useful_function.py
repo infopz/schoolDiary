@@ -92,8 +92,8 @@ def create_hw_keyboard():
         keyboard[1].append(button)
         correspond_dict[button] = modify_days(now_date, effective_increment)
         effective_increment += 1
-    keyboard.append(['This Month', 'Next Month'])
-    keyboard.append(['Other'])
+    keyboard.append(['This Month', 'Next Month', 'Other'])
+    keyboard.append(['Menu', 'Back'])
     return keyboard, correspond_dict
 
 
@@ -122,7 +122,8 @@ def create_month_keyboard(month):
         button = d_week + ' ' + str(i)
         keyboard[row].append(button)
         conversion_dict[button] = day.strftime('%m%d')
-    return keyboard, conversion_dict  # FIXME: return the jsoned keyboard, not the list
+    keyboard.append(['Menu', 'Back'])
+    return keyboard, conversion_dict
 
 
 def create_this_month_keyboard():

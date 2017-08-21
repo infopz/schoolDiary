@@ -1,5 +1,4 @@
 import pzgram
-import json
 from datetime import datetime, timedelta
 
 import SQL_function
@@ -94,13 +93,21 @@ def manage_date(message, chat, shared):  # possible input status: newHW, newTest
         k_hist.append('')
         c_hist.append('')
     elif message.text == 'Back':
-        if len(k_hist) > 1:
+        if len(k_hist):
             k_hist.pop()
             exec("chat.send('Select a day:', reply_markup=shared['keyboards]['"+k_hist[-1]+"'])")
             c_hist.pop()
             if c_hist[-1] != '':
                 exec("cache['conv_dict] = shared['keyboards]['"+c_hist[-1]+"']")
-    else:  # FIXME: reset conv_dict
+        else:
+            if shared['status'] == 'newHW' or shared['status'] == 'newTest':
+                chat.send('Choose a command:')
+                shared['status'] = ''
+            elif shared['status'] == 'find2':
+                find_command()
+            elif shared['status'] == 'newVote2':
+                new_vote_command()
+    else:
         status = shared['status']
         if status == 'newHW':
             chat.send('The day that you give me is not correct')
@@ -110,8 +117,10 @@ def manage_date(message, chat, shared):  # possible input status: newHW, newTest
             new_test(chat, shared)
         elif status == 'editDate' or status == 'find2':
             chat.send('The day that you give me is not correct, retry', reply_markup=shared['keyboards']['this_m_test'])
+            cache['conv_dict'] = shared['keyboards']['this_m_c']
         elif status == 'newVote2':
             chat.send('The day that you give me is not correct, retry', reply_markup=shared['keyboards']['this_m_vote'])
+            cache['conv_dict'] = shared['keyboards']['this_m_c']
     shared['k_hist'] = k_hist
     shared['c_hist'] = c_hist
     shared['cache'] = cache
@@ -377,7 +386,7 @@ def find_command(chat, shared):
     shared['status'] = 'find1'
 
 
-def find_ask_date(message, chat, shared):
+def find_ask_date(message, chat, shared):  # TODO: bold the day with commitments
     options = ['Homeworks', 'Tests', 'Both']
     if message.text not in options:
         keyboard = pzgram.create_keyboard([['Homeworks', 'Tests'], ['Both']], one=True)
@@ -587,6 +596,32 @@ def load_times(chat, shared):
         print('Error while loading - ' + str(e))
 
 # END /loadtimes FUNCTIONS
+# START /viewtimes FUNCTIONS
+
+def view_times_command(chat, shared):
+    day_keyboard = pzgram.create_keyboard([['Mon', 'Tue', 'Wed'], ['Thr', 'Fri', 'Sat']], one=True)
+    chat.send("Select a day:", reply_markup=day_keyboard)
+    shared['status'] = 'times'
+
+
+def view_times_send(message, chat, shared):
+    if message.text not in ['Mon', 'Tue', 'Wed', 'Thr', 'Fri', 'Sat']:
+        day_keyboard = pzgram.create_keyboard([['Mon', 'Tue', 'Wed'], ['Thr', 'Fri', 'Sat']], one=True)
+        chat.send("Please, select one of this day:", reply_markup=day_keyboard)
+        return
+    convert_dict = {'Mon': 0, 'Tue': 1, 'Wed': 2, 'Thr': 3, 'Fri': 4, 'Sat': 5}
+    number_day = convert_dict[message.text]
+    times = shared['times']
+    subjects = times['days'][number_day]['subjects']
+    m = ''
+    for n, s in enumerate(subjects, start=1):
+        if n == 6:
+            m += '\n'
+        m += str(n) + ' ' + s + '\n'
+    chat.send(m)
+    shared['status'] = ''
+
+# END /viewtimes FUNCTIONS
 
 
 def allert_timer(bot):
@@ -595,6 +630,18 @@ def allert_timer(bot):
         s = useful_function.check_tomorrow()
         if s != '':
             pzgram.Chat(20403805, bot).send(s)
+    elif h == '20'
+        tomorrow = (datetime.now()+timedelta(days=1)).strftime('%u')
+        if tomorrow != 7:
+            times = shared['times']
+            subjects = times['days'][number_day]['subjects']
+            m = ''
+            for n, s in enumerate(subjects, start=1):
+                if n == 6:
+                    m += '\n'
+                m += str(n) + ' ' + s + '\n'
+            chat.send("Here's your subjects for tomorrow")
+            chat.send(m)
 
 
 def set_keyboard(shared):  # FIXME: Insert menu and back in all keyb # FIXME: Insert prev month keyb
@@ -605,11 +652,11 @@ def set_keyboard(shared):  # FIXME: Insert menu and back in all keyb # FIXME: In
     days = pzgram.create_keyboard(days_l, one=True)
     this_m = pzgram.create_keyboard(this_m_l, one=True)
     this_m_test_l = this_m_l.copy()
-    this_m_test_l.append(['Next Month', 'Other'])
+    this_m_test_l.insert(-1, ['Next Month', 'Other'])
     this_m_vote_l = this_m_l.copy()
-    this_m_vote_l.append(['Prev Month', 'Other'])
-    this_m_vote = pzgram.create_keyboard(this_m_vote_l, one=True)
-    this_m_test = pzgram.create_keyboard(this_m_test_l, one=True)  # Like this month, whit buttons
+    this_m_vote_l.insert(-1, ['Prev Month', 'Other'])
+    this_m_vote = pzgram.create_keyboard(this_m_vote_l, one=True)  # Like this month, with prev button
+    this_m_test = pzgram.create_keyboard(this_m_test_l, one=True)  # Like this month, with buttons
     next_m = pzgram.create_keyboard(next_m_l, one=True)
     all_month = pzgram.create_keyboard(useful_function.create_all_month_keyboard(), one=True)
     subj = [[], [], []]
@@ -649,12 +696,14 @@ def start_action(shared):
                              'newVote2': manage_date, 'newVote3': new_vote_subj, 'newVote4': new_vote_type,
                              'newVote5': new_vote_notes_ask, 'newVote6': new_vote_notes_receive,
                              'viewVotes': view_vote_answer, 'viewVotesSubj': view_vote_subj,
-                             'viewVotesAvg': view_vote_average, 'newVote': new_vote_number}
+                             'viewVotesAvg': view_vote_average, 'newVote': new_vote_number, 'times': view_times_send}
     shared['k_hist'] = []
     shared['c_hist'] = []
+    shared['times'] = useful_function.load_times()
 
 bot.set_commands({'/newtest': new_test, '/view': view_calendar, '/newhw': new_homework, '/start': start_command,
-                  '/find': find_command, '/newvotes': new_vote_command, '/viewvotes': view_vote_command})
+                  '/find': find_command, '/newvotes': new_vote_command, '/viewvotes': view_vote_command,
+                  '/loadtimes': load_times, '/viewtimes': view_times_command})
 bot.set_function({'start_action': start_action, 'after_division': process_message})
 bot.set_timers({7200: allert_timer, 43200: set_keyboard})
 bot.set_keyboard([['View', 'Find'], ['New Test', 'New Homework'], ['New Vote', 'View Vote']])

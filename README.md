@@ -11,25 +11,27 @@ import pzgram
 bot = pzgram.Bot(api_key)
 ```
 After, you can set the list of commands as a dict of command name and command related function:
+
 `bot.set_commands({'/try': try_function})`
 
 At the same way you can set some "timers", functions that are repeated every amount of seconds:
+
 `bot.set_timers({60: send_hello})`
 
 After setting all, you can start the bot writing:
 `bot.run()`
 
 ## schoolDiary
-This bot is active on @schoolDiaryBot
-This bot allows you to manage your tests and homeworks easly.
+This program is active on @schoolDiaryBot
+This bot is like a real diary and allows you to manage your tests and homeworks easly.
 The main featues are:
 * Storing your homeworks and tests
 * Viewing and Editing your commitments
 * Remind your upcoming homeworks and tests
+* Save your school time and remind you evening before
 * Register your vote and view them by Date, Subject and their average
 
 ## Upcoming features
-* Support for school time
 * Integration with ClasseViva API
-* Integration with Conofy to add commitments also on my iPhone Calendar
+* Integration with Conofy to add commitments also on my iPhone calendar
 * Bring pzGram to a beta version adding the support for all type of message and groups
