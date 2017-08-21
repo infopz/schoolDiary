@@ -107,6 +107,9 @@ def manage_date(message, chat, shared):  # possible input status: newHW, newTest
                 find_command(chat, shared)
             elif shared['status'] == 'newVote2':
                 new_vote_command(chat, shared)
+            elif shared['status'] == 'editDate':
+                chat.send(shared['cache']['one_message'], reply_markup=shared['cache']['keyb'])
+                shared['status'] = 'view3'
     else:
         status = shared['status']
         if status == 'newHW':
@@ -129,6 +132,15 @@ def manage_date(message, chat, shared):  # possible input status: newHW, newTest
 def manage_subject(message, chat, shared):
     cache = shared['cache']
     subjects = shared['subjects']
+    if message.text == 'Back':
+        if shared['status'] == 'newHW2':
+            new_homework(chat, shared)
+        elif shared['status'] == 'newTest2':
+            new_test(chat, shared)
+        else:  # editSubj
+            chat.send(shared['cache']['one_message'], reply_markup=shared['cache']['keyb'])
+            shared['status'] = 'view3'
+        return
     for i in subjects:
         if subjects[i] == message.text:
             cache['subject'] = i
@@ -176,7 +188,10 @@ def view_calendar(chat, shared):
     shared['status'] = 'view'
 
 
-def view_manage_date(message, chat, shared):  # TODO: Manage Back
+def view_manage_date(message, chat, shared):
+    if message.text == 'Back':
+        chat.send('Select a command:')
+        return
     start_date, stop_date = '', ''
     month_length = [00, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
     if message.text == 'This Week':
@@ -203,11 +218,14 @@ def view_manage_date(message, chat, shared):  # TODO: Manage Back
             chat.send(m, reply_markup=keyboard)
         else:
             chat.send(m, reply_markup=k)
-            shared['cache'] = {'conv_dict': conv_dict, 'keyb': k}
+            shared['cache'] = {'conv_dict': conv_dict, 'keyb': k, 'message': m}
             shared['status'] = 'view2'
 
 
 def view_one(message, chat, shared):
+    if message.text == 'Back':
+        view_calendar(chat, shared)
+        return
     cache = shared['cache']
     if message.text not in cache['conv_dict']:
         chat.send('Error, please select another one', reply_markup=cache['keyb'])
@@ -222,11 +240,12 @@ def view_one(message, chat, shared):
         date = datetime.strptime(test[1]+year, '%m%d%Y').strftime('%a %d %b')  # Ex. Mon 12 Feb
         m += date + '\n'
         m += test[2] + '\n'
-        keyboard = [['Menu', 'Edit Date'], ['Edit Subj', 'Edit Arg', 'Edit Notes']]  # FIXME: Insert Back Button
+        keyboard = [['Menu', 'Edit Date'], ['Edit Subj', 'Edit Arg', 'Edit Notes']]
         if test[3] is not None:
             m += test[3]
         keyboard = pzgram.create_keyboard(keyboard, one=True)
         chat.send(m, reply_markup=keyboard)
+        cache['one_message'] = m
         shared['status'] = 'view3'
         cache['keyb'] = keyboard
         cache['row'] = row
@@ -245,6 +264,7 @@ def view_one(message, chat, shared):
             keyboard = [['Menu'], ['Edit Date', 'Edit Subj', 'Edit Notes']]
         keyboard = pzgram.create_keyboard(keyboard, one=True)
         chat.send(m, reply_markup=keyboard)
+        cache['one_message'] = m
         shared['status'] = 'view3'
         cache['keyb'] = keyboard
         cache['row'] = row
@@ -252,6 +272,10 @@ def view_one(message, chat, shared):
 
 
 def view_edit_one(message, chat, shared):
+    if message.text == 'Back':
+        chat.send(shared['cache']['message'], reply_markup=shared['cache']['keyboard'])
+        shared['status'] = 'view2'
+        return
     cache = shared['cache']
     possible_options = ['Edit Date', 'Edit Subj', 'Edit Arg', 'Edit Notes', 'Completed']
     if message.text not in possible_options:
@@ -380,13 +404,16 @@ def view_commitments_between(start, stop):
 
 
 def find_command(chat, shared):
-    keyboard = pzgram.create_keyboard([['Homeworks', 'Tests'], ['Both']], one=True)
+    keyboard = pzgram.create_keyboard([['Homeworks', 'Tests'], ['Both'], ['Menu', 'Back']], one=True)
     chat.send('Select wich type of commitments you want to find:', reply_markup=keyboard)
     shared['cache'] = {}
     shared['status'] = 'find1'
 
 
 def find_ask_date(message, chat, shared):  # TODO: bold the day with commitments
+    if message.text == 'Back':
+        chat.send('Choose a command:')
+        return
     options = ['Homeworks', 'Tests', 'Both']
     if message.text not in options:
         keyboard = pzgram.create_keyboard([['Homeworks', 'Tests'], ['Both']], one=True)
@@ -454,6 +481,11 @@ def new_vote_date(chat, cache, shared):
 
 
 def new_vote_subj(message, chat, shared):
+    if message.text == 'Back':
+        chat.send('Now send me the date of this test', reply_markup=shared['keyboards']['this_m_test'])
+        cache['conv_dict'] = shared['keyboards']['this_m_c']
+        shared['status'] = 'newVote2'
+        return
     subj = shared['subjects']
     cache = shared['cache']
     for i in subj:
@@ -471,6 +503,10 @@ def new_vote_subj(message, chat, shared):
 
 
 def new_vote_type(message, chat, shared):
+    if message.text == 'Back':
+        chat.send('Ok, now send me the subject', reply_markup=shared['keyboards']['subj'])
+        shared['status'] = 'newVote3'
+        return
     if message.text not in ['Written', 'Oral', 'Practice']:
         keyboard = pzgram.create_keyboard([['Written', 'Oral'], ['Practice']], one=True)
         chat.send('Select the kind of this vote:', reply_markup=keyboard)
@@ -510,12 +546,15 @@ def new_vote_notes_receive(message, chat, shared):
 
 
 def view_vote_command(chat, shared):
-    keyboard = pzgram.create_keyboard([['Date', 'Subject'], ['Average']])
+    keyboard = pzgram.create_keyboard([['Date', 'Subject'], ['Average'], ['Menu', 'Back']])
     chat.send('Select an option:', reply_markup=keyboard)
     shared['status'] = 'viewVotes'
 
 
-def view_vote_answer(message, chat, shared):
+def view_vote_answer(message, chat, shared):  # FIXME: check colum order
+    if message.text == 'Back':
+        chat.send('Choose a command:')
+        return
     if message.text not in ['Date', 'Subject', 'Average']:
         keyboard = pzgram.create_keyboard([['Date', 'Subject'], ['Average']])
         chat.send('You give me a bad answer, please select an option:', reply_markup=keyboard)
@@ -664,6 +703,7 @@ def set_keyboard(shared):
     subj = [[], [], []]
     for i, s in enumerate(shared['subjects']):
         subj[i // 3].append(shared['subjects'][s])
+    subj.append(['Menu', 'Back'])
     subj = pzgram.create_keyboard(subj, one=False)
     shared['keyboards'] = {'days': days, 'this_m': this_m, 'next_m': next_m, 'all_month': all_month,
                            'this_m_test': this_m_test, 'days_c': days_c, 'this_m_c': this_m_c,
