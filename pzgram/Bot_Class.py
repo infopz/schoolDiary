@@ -40,7 +40,7 @@ class Command:
         self.func(self.args)
 
 
-class Function:
+class Function:  # FIXME: check
 
     def __init__(self, func):
         self.func = func
@@ -158,7 +158,7 @@ def parse_message(message_dict, bot):
     parameter = ['from', 'forward_from', 'forward_from_chat', 'forward_from_message_id', 'forward_date',
                  'reply_to_message', 'edit_date']
     to_pass = {}
-    for i in parameter:
+    for i in parameter:  # check all possible types, parse what found and add them to to_pass dict
         if i in message_dict:
             if i == parameter[3]:
                 to_pass[i] = message_dict[i]

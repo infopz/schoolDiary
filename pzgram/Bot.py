@@ -57,13 +57,13 @@ class Bot:
             r = requests.get(url, stream=True)
             with open(local_path+local_filename, 'wb') as f:
                 for chunk in r.iter_content(chunk_size=1024):
-                    if chunk:  # filter out keep-alive new chunks
+                    if chunk:
                         f.write(chunk)
         except Exception as e:
             raise RequestError(str(e))
 
-    def get_update(self):
-        p = {'offset': self.offset, 'limit': 1, 'timeout': 1000}
+    def get_updates(self):
+        p = {'offset': self.offset, 'limit': 5, 'timeout': 1000}
         while True:
             update = api_request(self.botKey, 'getUpdates', p)
             if update == 'apiError':
@@ -73,7 +73,7 @@ class Bot:
                 print(update['description'])
                 continue
             if len(update['result']) != 0:
-                data = update['result'][0]
+                data = update['result']
                 self.offset = data['update_id'] + 1
                 return data
             else:
@@ -103,33 +103,34 @@ class Bot:
             print('Bot Started')
             self.started = True
             while True:
-                update = self.get_update()
-                message = self.parse_update(update)
-                if message.date < self.start_date and not self.accept_old_message:
-                    continue
-                if message.edited and not self.allow_edited_message:
-                    continue
-                chat = message.chat
-                arguments = []
-                if message.type == 'command':
-                    arguments = message.text.split()[1:]
-                if self.before_division:
-                    args = create_parameters_tuple(self.useful_function['before_division'].param,
-                                                   self, chat, message, arguments, shared)
-                    self.useful_function['before_division'].func(*args)
-                if message.type == 'command':
-                    self.divide_command(message, chat, shared)
-                    continue  # Step Over the after_division
-                if self.after_division:
-                    args = create_parameters_tuple(self.useful_function['after_division'].param,
-                                                   self, chat, message, arguments, shared)
-                    self.useful_function['after_division'].func(*args)
+                updates = self.get_updates()
+                for u in updates:
+                    message = self.parse_update(u)
+                    if message.date < self.start_date and not self.accept_old_message:
+                        continue
+                    if message.edited and not self.allow_edited_message:
+                        continue
+                    chat = message.chat
+                    arguments = []
+                    if message.type == 'command':
+                        arguments = message.text.split()[1:]
+                    if self.before_division:
+                        args = create_parameters_tuple(self.useful_function['before_division'].param,
+                                                       self, chat, message, arguments, shared)
+                        self.useful_function['before_division'].func(*args)
+                    if message.type == 'command':
+                        self.divide_command(message, chat, shared)
+                        continue  # Step Over the after_division
+                    if self.after_division:
+                        args = create_parameters_tuple(self.useful_function['after_division'].param,
+                                                       self, chat, message, arguments, shared)
+                        self.useful_function['after_division'].func(*args)
         except KeyboardInterrupt:
             pass
 
     def start_bot(self, shared):
         api_request(self.botKey, 'getMe')  # Check Api and Conncction
-        self.start_date = datetime.now()  # FIXME: check pc time
+        self.start_date = datetime.now()
         if self.start_action:
             arg = []
             for i in self.useful_function['start_action'].param:
@@ -169,10 +170,7 @@ class Bot:
             pass
 
     def parse_update(self, update):
-        try:
-            message = parse_message(update['message'], self)
-        except KeyError:  # FIXME: do this better
-            message = parse_message(update['edited_message'], self)
+        message = parse_message(update['message'], self)
         return message
 
     def divide_command(self, message, chat, shared):

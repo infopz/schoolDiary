@@ -104,9 +104,9 @@ def manage_date(message, chat, shared):  # possible input status: newHW, newTest
                 chat.send('Choose a command:')
                 shared['status'] = ''
             elif shared['status'] == 'find2':
-                find_command()
+                find_command(chat, shared)
             elif shared['status'] == 'newVote2':
-                new_vote_command()
+                new_vote_command(chat, shared)
     else:
         status = shared['status']
         if status == 'newHW':
@@ -588,15 +588,17 @@ def view_vote_average(message, chat, shared):
 # END /viewvotes FUNCTIONS
 # START /loadtimes FUNCTIONS
 
+
 def load_times(chat, shared):
     try:
-        shared['times'] = SQL_function.load_times()
+        shared['times'] = useful_function.load_times()
         chat.send('School Times loaded')
     except Exception as e:
         print('Error while loading - ' + str(e))
 
 # END /loadtimes FUNCTIONS
 # START /viewtimes FUNCTIONS
+
 
 def view_times_command(chat, shared):
     day_keyboard = pzgram.create_keyboard([['Mon', 'Tue', 'Wed'], ['Thr', 'Fri', 'Sat']], one=True)
@@ -624,27 +626,27 @@ def view_times_send(message, chat, shared):
 # END /viewtimes FUNCTIONS
 
 
-def allert_timer(bot):
+def allert_timer(bot, shared):
     h = datetime.now().strftime('%H')
     if h == '14':
         s = useful_function.check_tomorrow()
         if s != '':
             pzgram.Chat(20403805, bot).send(s)
-    elif h == '20'
+    elif h == '20':
         tomorrow = (datetime.now()+timedelta(days=1)).strftime('%u')
         if tomorrow != 7:
             times = shared['times']
-            subjects = times['days'][number_day]['subjects']
+            subjects = times['days'][tomorrow]['subjects']
             m = ''
             for n, s in enumerate(subjects, start=1):
                 if n == 6:
                     m += '\n'
                 m += str(n) + ' ' + s + '\n'
-            chat.send("Here's your subjects for tomorrow")
-            chat.send(m)
+            pzgram.Chat(20403805, bot).send("Here's your subjects for tomorrow")
+            pzgram.Chat(20403805, bot).send(m)
 
 
-def set_keyboard(shared):  # FIXME: Insert menu and back in all keyb # FIXME: Insert prev month keyb
+def set_keyboard(shared):
     month = int(datetime.now().strftime('%m'))
     days_l, days_c = useful_function.create_hw_keyboard()  # 'Default Keyboard'
     this_m_l, this_m_c = useful_function.create_this_month_keyboard()  # All days of this m

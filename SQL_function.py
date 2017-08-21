@@ -7,6 +7,7 @@ def create_tables():
         cur = con.cursor()
         cur.execute("CREATE TABLE Test (Subject TEXT, Date TEXT, Arguments TEXT, Notes TEXT)")
         cur.execute("CREATE TABLE Homework (Subject TEXT, Date TEXT, Notes TEXT, Finished INT)")
+        cur.execute("CREATE TABLE Votes (Vote FLOAT, Date TEXT, Subject TEXT, Type TEXT, Notes TEXT)")
 
 
 def add_new_test(subj, date, arg, notes=None):
