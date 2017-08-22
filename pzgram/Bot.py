@@ -75,7 +75,7 @@ class Bot:
                 continue
             if len(update['result']) != 0:
                 data = update['result']
-                self.offset = data['update_id'] + 1
+                self.offset = data[-1]['update_id'] + 1
                 return data
             else:
                 time.sleep(0.5)

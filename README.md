@@ -35,3 +35,4 @@ The main featues are:
 * Integration with ClasseViva API
 * Integration with Conofy to add commitments also on my iPhone calendar
 * Bring pzGram to a beta version adding the support for all type of message and groups
+* Create a wiki for this project on my site

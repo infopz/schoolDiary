@@ -218,7 +218,7 @@ def view_manage_date(message, chat, shared):
             chat.send(m, reply_markup=keyboard)
         else:
             chat.send(m, reply_markup=k)
-            shared['cache'] = {'conv_dict': conv_dict, 'keyb': k, 'message': m}
+            shared['cache'] = {'conv_dict': conv_dict, 'comm_keyb': k, 'message': m}
             shared['status'] = 'view2'
 
 
@@ -228,7 +228,7 @@ def view_one(message, chat, shared):
         return
     cache = shared['cache']
     if message.text not in cache['conv_dict']:
-        chat.send('Error, please select another one', reply_markup=cache['keyb'])
+        chat.send('Error, please select another one', reply_markup=cache['comm_keyb'])
         return
     row = cache['conv_dict'][message.text]
     if row[0] == 't':
@@ -240,7 +240,7 @@ def view_one(message, chat, shared):
         date = datetime.strptime(test[1]+year, '%m%d%Y').strftime('%a %d %b')  # Ex. Mon 12 Feb
         m += date + '\n'
         m += test[2] + '\n'
-        keyboard = [['Menu\U0001F3B2', 'Edit Date'], ['Edit Subj', 'Edit Arg', 'Edit Notes']]
+        keyboard = [['Menu\U0001F3B2', 'Edit Date'], ['Edit Subj', 'Edit Arg', 'Edit Notes'], ['Back\U0001F519']]
         if test[3] is not None:
             m += test[3]
         keyboard = pzgram.create_keyboard(keyboard, one=True)
@@ -258,10 +258,10 @@ def view_one(message, chat, shared):
         date = datetime.strptime(hw[1] + year, '%m%d%Y').strftime('%a %d %b')  # Ex. Mon 12 Feb
         m += date + '\n'
         m += hw[2] + '\n'
-        keyboard = [['Menu\U0001F3B2', 'Completed\U00002611'], ['Edit Date', 'Edit Subj', 'Edit Notes']]
+        keyboard = [['Menu\U0001F3B2', 'Completed\U00002611'], ['Edit Date', 'Edit Subj', 'Edit Notes'], ['Back\U0001F519']]
         if hw[3]:
             m += '_Completed\U00002611_'
-            keyboard = [['Menu\U0001F3B2'], ['Edit Date', 'Edit Subj', 'Edit Notes']]
+            keyboard = [['Menu\U0001F3B2', 'Back\U0001F519'], ['Edit Date', 'Edit Subj', 'Edit Notes']]
         keyboard = pzgram.create_keyboard(keyboard, one=True)
         chat.send(m, reply_markup=keyboard)
         cache['one_message'] = m
@@ -273,7 +273,8 @@ def view_one(message, chat, shared):
 
 def view_edit_one(message, chat, shared):
     if message.text == 'Back\U0001F519':
-        chat.send(shared['cache']['message'], reply_markup=shared['cache']['keyboard'])
+        print(shared['cache'])
+        chat.send(shared['cache']['message'], reply_markup=shared['cache']['comm_keyb'])
         shared['status'] = 'view2'
         return
     cache = shared['cache']
@@ -395,7 +396,7 @@ def view_commitments_between(start, stop):
         if current_date == stop:
             break
         current_date = (datetime.strptime(current_date, '%m%d') + timedelta(days=1)).strftime('%m%d')
-    keyboard.append(['Menu\U0001F3B2'])
+    keyboard.append(['Menu\U0001F3B2', 'Back\U0001F519'])
     keyboard = pzgram.create_keyboard(keyboard, one=True)
     return s, keyboard, conv_dict
 
