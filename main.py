@@ -567,7 +567,7 @@ def view_vote_answer(message, chat, shared):
         for i in votes:
             subj = i[2]
             subj = shared['subjects'][subj]
-            m += f'{i[0]} - {subj} {convert_type[i[3]]} - {i[1][0:2]}\{i[1][2:4]}\n'
+            m += f'{i[0]} - {subj} {convert_type[i[3]]} - {i[1][0:2]}/{i[1][2:4]}\n'
         chat.send(m)
         shared['status'] = ''
         shared['cache'] = {}
@@ -595,9 +595,11 @@ def view_vote_subj(message, chat, shared):
         convert_type = {'Practice': 'Pr', 'Oral': 'Or', 'Written': 'Wr'}
         m = ''
         for v in votes:
-            m += f'{v[0]} -  {convert_type[v[1]]} - {v[2][0:2]}\{v[2][2:4]}\n'
-            if i[3] is not None:
+            print(v)
+            m += f'{v[0]} -  {convert_type[v[1]]} - {v[2][0:2]}/{v[2][2:4]}\n'
+            if v[3] is not None:
                 m += '   ' + v[3] + '\n'
+        chat.send(m)
     else:
         chat.send('You have no vote for this subject')
     shared['status'] = ''
@@ -694,7 +696,9 @@ def set_keyboard(shared):
     days = pzgram.create_keyboard(days_l, one=True)
     this_m = pzgram.create_keyboard(this_m_l, one=True)
     this_m_test_l = this_m_l.copy()
+    print(this_m_l)
     this_m_test_l.insert(-1, ['Next Month', 'Other'])
+    print(this_m_test_l)
     this_m_vote_l = this_m_l.copy()
     this_m_vote_l.insert(-1, ['Prev Month', 'Other'])
     this_m_vote = pzgram.create_keyboard(this_m_vote_l, one=True)  # Like this month, with prev button

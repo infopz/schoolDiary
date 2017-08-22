@@ -93,7 +93,7 @@ def create_hw_keyboard():
         correspond_dict[button] = modify_days(now_date, effective_increment)
         effective_increment += 1
     keyboard.append(['This Month', 'Next Month', 'Other'])
-    keyboard.append(['Menu\U0001F3B2', 'Back'])
+    keyboard.append(['Menu\U0001F3B2', 'Back\U0001F519'])
     return keyboard, correspond_dict
 
 
@@ -122,7 +122,7 @@ def create_month_keyboard(month):
         button = d_week + ' ' + str(i)
         keyboard[row].append(button)
         conversion_dict[button] = day.strftime('%m%d')
-    keyboard.append(['Menu\U0001F3B2', 'Back'])
+    keyboard.append(['Menu\U0001F3B2', 'Back\U0001F519'])
     return keyboard, conversion_dict
 
 
@@ -146,6 +146,7 @@ def create_this_month_keyboard():
         button = d_week + ' ' + day.strftime('%d')
         keyboard[row].append(button)
         conversion_dict[button] = day.strftime('%m%d')
+    keyboard.append(['Menu\U0001F3B2', 'Back\U0001F519'])
     return keyboard, conversion_dict
 
 

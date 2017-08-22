@@ -3,7 +3,7 @@ My personal project for an automated School Diary, working with pzGram, my libra
 ## pzGram
 This is an alpha version, it only supports text messages not other types, and the groups are not supported yet.
 
-Learn more at the wiki on [my site](infopz.hopto.org/pzgram)
+Learn more at the wiki on [my site](http://infopz.hopto.org/pzgram)
 
 To create a new bot you need to create a new instance of Bot class:
 ```python
