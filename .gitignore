@@ -3,3 +3,4 @@ test_database.py
 diary.db
 __pycache__/
 .idea/
+/pzgram/__pycache__/

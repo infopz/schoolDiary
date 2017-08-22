@@ -1,5 +1,6 @@
 import requests
 import time
+import traceback
 from multiprocessing import Process, Manager
 
 from .ExceptionFile import *
@@ -93,7 +94,7 @@ class Bot:
         try:
             for p in process:
                 p.join()
-        except KeyboardInterrupt:
+        except KeyboardInterrupt:  # FIXME: study betterd
             print("Shutting Down...")
             for p in process:
                 p.terminate()
@@ -105,26 +106,32 @@ class Bot:
             while True:
                 updates = self.get_updates()
                 for u in updates:
-                    message = self.parse_update(u)
-                    if message.date < self.start_date and not self.accept_old_message:
-                        continue
-                    if message.edited and not self.allow_edited_message:
-                        continue
-                    chat = message.chat
-                    arguments = []
-                    if message.type == 'command':
-                        arguments = message.text.split()[1:]
-                    if self.before_division:
-                        args = create_parameters_tuple(self.useful_function['before_division'].param,
-                                                       self, chat, message, arguments, shared)
-                        self.useful_function['before_division'].func(*args)
-                    if message.type == 'command':
-                        self.divide_command(message, chat, shared)
-                        continue  # Step Over the after_division
-                    if self.after_division:
-                        args = create_parameters_tuple(self.useful_function['after_division'].param,
-                                                       self, chat, message, arguments, shared)
-                        self.useful_function['after_division'].func(*args)
+                    try:
+                        message = self.parse_update(u)
+                        if message.date < self.start_date and not self.accept_old_message:
+                            continue
+                        if message.edited and not self.allow_edited_message:
+                            continue
+                        chat = message.chat
+                        arguments = []
+                        if message.type == 'command':
+                            arguments = message.text.split()[1:]
+                        if self.before_division:
+                            args = create_parameters_tuple(self.useful_function['before_division'].param,
+                                                           self, chat, message, arguments, shared)
+                            self.useful_function['before_division'].func(*args)
+                        if message.type == 'command':
+                            self.divide_command(message, chat, shared)
+                            continue  # Step Over the after_division
+                        if self.after_division:
+                            args = create_parameters_tuple(self.useful_function['after_division'].param,
+                                                           self, chat, message, arguments, shared)
+                            self.useful_function['after_division'].func(*args)
+                    except Exception as e:
+                        if str(e) == 'KeyboardInterrupt':
+                            pass
+                        else:
+                            traceback.print_exc()
         except KeyboardInterrupt:
             pass
 
