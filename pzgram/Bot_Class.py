@@ -130,9 +130,14 @@ class Photo:
         self.text = caption
 
     def save(self, path=''):
-        get_file = api_request(self.bot.botKey, 'getFile', {'file_id': self.file_id})
-        if get_file['ok']:
+        try:
+            get_file = api_request(self.bot.botKey, 'getFile', {'file_id': self.file_id})
+            if get_file == 'apiError' or not get_file['ok']:
+                return ''
             self.bot.download_file(get_file['result']['file_path'], path)
+            return local_filename
+        except:
+            return ''
 
 
 def command_not_found(chat, command):

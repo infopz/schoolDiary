@@ -7,6 +7,34 @@ from .ExceptionFile import *
 from .Bot_Class import *
 from .api_file import api_request
 
+# Bot Structure
+'''
+CREATE BOT -> __init__
+COMMANDS -> set_commands -> class Command
+FUNCTIONS -> set_functions -> class Function
+TIMERS -> set_timers
+BOT RUN
+run
+   start_bot
+      start_action 				    ->
+         api_request
+   run_bot
+      get_updates
+         api_request
+      parse_update
+	 parse_message -> class Message, (o)Photo
+            parse_chat -> class Chat
+      create_parameters_tuple
+      (o)before_division 			->   (o) download_file
+      (o)divide_command 			->
+         (o) default_start 			->
+         (o) default_help 			->
+         (o) command_not_found 		->
+      (o)after_division 			->
+   run_timer
+      manage_one_timer 				->
+'''
+
 
 class Bot:
 
@@ -62,23 +90,28 @@ class Bot:
                         f.write(chunk)
         except Exception as e:
             raise RequestError(str(e))
+        return local_filename
 
     def get_updates(self):
         p = {'offset': self.offset, 'limit': 5, 'timeout': 1000}
         while True:
-            update = api_request(self.botKey, 'getUpdates', p)
-            if update == 'apiError':
-                continue
-            if not update['ok']:
-                print('Error with the update, continue')
-                print(update['description'])
-                continue
-            if len(update['result']) != 0:
-                data = update['result']
-                self.offset = data[-1]['update_id'] + 1
-                return data
-            else:
-                time.sleep(0.5)
+            try:
+                update = api_request(self.botKey, 'getUpdates', p)
+                if update == 'apiError':
+                    continue
+                if not update['ok']:
+                    print('Error with the update, continue')
+                    print(update['description'])
+                    continue
+                if len(update['result']) != 0:
+                    data = update['result']
+                    self.offset = data[-1]['update_id'] + 1
+                    return data
+                else:
+                    time.sleep(0.5)
+            except Exception as e:
+                if not isinstance(e, KeyboardInterrupt):
+                    traceback.print_exc()
 
     def run(self):
         shared = Manager().dict()
@@ -127,16 +160,18 @@ class Bot:
                             args = create_parameters_tuple(self.useful_function['after_division'].param,
                                                            self, chat, message, arguments, shared)
                             self.useful_function['after_division'].func(*args)
-                    except Exception as e:
-                        if str(e) == 'KeyboardInterrupt':
-                            pass
-                        else:
+                    except Exception as e:  # Write the traceback but the bot continue running
+                        if isinstance(e, StopBot):
+                            raise e
+                        if not isinstance(e, KeyboardInterrupt):
                             traceback.print_exc()
         except KeyboardInterrupt:
             pass
 
     def start_bot(self, shared):
-        api_request(self.botKey, 'getMe')  # Check Api and Conncction
+        a = api_request(self.botKey, 'getMe')  # Check Api and Conncction
+        if a == 'apiError':
+            raise StopBot
         self.start_date = datetime.now()
         if self.start_action:
             arg = []

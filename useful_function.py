@@ -166,3 +166,47 @@ def create_all_month_keyboard():
 
 def load_times():
     return json.loads(open('times.json', 'r').read())
+
+
+def view_commitments_between(start, stop):
+    tests, homeworks = SQL_function.find_between(start, stop)
+    s = ''
+    current_date = start
+    keyboard = []
+    conv_dict = {}
+    row = -1
+    while True:
+        smt_found = False  # something
+        year = '18'
+        if int(start[0:2]) >= 7:
+            year = '17'
+        current_day = datetime.strptime(current_date + year, '%m%d%y').strftime('%a')
+        formatted_date = current_date[2:4] + '/' + current_date[0:2]
+        for t in tests:
+            if t[2] == current_date:
+                if not smt_found:
+                    smt_found = True
+                    s += '*' + current_day + ' ' + formatted_date + '*\n'
+                keyboard.append([])
+                row += 1
+                r = t[1] + ' test'
+                s += r + '\n'
+                keyboard[row].append(formatted_date + ' ' + r)
+                conv_dict[formatted_date + ' ' + r] = 't' + str(t[0])
+        for h in homeworks:
+            if h[2] == current_date:
+                if not smt_found:
+                    smt_found = True
+                    s += '*' + current_day + ' ' + formatted_date + '*\n'
+                keyboard.append([])
+                row += 1
+                r = h[1] + ' homework'
+                s += r + '\n'
+                keyboard[row].append(formatted_date + ' ' + r)
+                conv_dict[formatted_date + ' ' + r] = 'h' + str(h[0])
+        if current_date == stop:
+            break
+        current_date = (datetime.strptime(current_date, '%m%d') + timedelta(days=1)).strftime('%m%d')
+    keyboard.append(['Menu\U0001F3B2', 'Back\U0001F519'])
+    keyboard = pzgram.create_keyboard(keyboard, one=True)
+    return s, keyboard, conv_dict
