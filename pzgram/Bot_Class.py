@@ -45,13 +45,6 @@ class Function:  # FIXME: check
     def __init__(self, func):
         self.func = func
         self.param = inspect.getfullargspec(func).args
-        self.exec = ''
-
-    def create_execution_string(self, bot, chat, message, shared, args):
-        pass
-
-    def call_f(self):
-        exec(self.exec)
 
 
 class Chat:
@@ -100,7 +93,6 @@ class Message:
         for i in message_all_attributes:
             if not hasattr(self, i):
                 exec('self.'+i+'=None')
-                pass
 
     def reply(self, text):  # FIXME, add all the options for chat.send
         self.chat.send(text, reply=self.id)
@@ -206,7 +198,7 @@ def parse_message(message_dict, bot):
     return Message(id, chat, date, False, **to_pass)
 
 
-def create_parameters_tuple(parameters, bot, chat, message, arguments, shared):
+def create_parameters_tuple(parameters, bot, chat, message, shared, arguments=[]):
     arg = []
     for j in parameters:
         if j == 'chat':

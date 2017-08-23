@@ -672,7 +672,7 @@ def set_keyboard(shared):
                            'next_m_c': next_m_c, 'subj': subj, 'this_m_vote': this_m_vote}
 
 
-def process_message(message, chat, shared, args):
+def process_message(message, chat, shared):
     print(message.text)
     text_dict = shared['text_dict']
     status_dict = shared['status_dict']

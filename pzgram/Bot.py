@@ -146,19 +146,16 @@ class Bot:
                         if message.edited and not self.allow_edited_message:
                             continue
                         chat = message.chat
-                        arguments = []
-                        if message.type == 'command':
-                            arguments = message.text.split()[1:]
                         if self.before_division:
                             args = create_parameters_tuple(self.useful_function['before_division'].param,
-                                                           self, chat, message, arguments, shared)
+                                                           self, chat, message, shared)
                             self.useful_function['before_division'].func(*args)
                         if message.type == 'command':
                             self.divide_command(message, chat, shared)
                             continue  # Step Over the after_division
                         if self.after_division:
                             args = create_parameters_tuple(self.useful_function['after_division'].param,
-                                                           self, chat, message, arguments, shared)
+                                                           self, chat, message, shared)
                             self.useful_function['after_division'].func(*args)
                     except Exception as e:  # Write the traceback but the bot continue running
                         if isinstance(e, StopBot):
@@ -233,7 +230,7 @@ class Bot:
             command_not_found(chat, command_name)
             return
         arguments = text_split[1:]
-        args = create_parameters_tuple(parameters, self, chat, message, arguments, shared)
+        args = create_parameters_tuple(parameters, self, chat, message, shared, arguments)
         self.commands[command_name].func(*args)
 
     def set_keyboard(self, buttons, resize=True):
