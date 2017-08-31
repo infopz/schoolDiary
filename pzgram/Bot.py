@@ -113,7 +113,7 @@ class Bot:
                 if not isinstance(e, KeyboardInterrupt):
                     traceback.print_exc()
 
-    def run(self):
+    def run(self):  # FIXME: one process for all timers
         shared = Manager().dict()
         process = []
         p1 = Process(target=self.run_bot, args=(shared,))
