@@ -653,9 +653,7 @@ def set_keyboard(shared):
     days = pzgram.create_keyboard(days_l, one=True)
     this_m = pzgram.create_keyboard(this_m_l, one=True)
     this_m_test_l = this_m_l.copy()
-    print(this_m_l)
     this_m_test_l.insert(-1, ['Next Month', 'Other'])
-    print(this_m_test_l)
     this_m_vote_l = this_m_l.copy()
     this_m_vote_l.insert(-1, ['Prev Month', 'Other'])
     this_m_vote = pzgram.create_keyboard(this_m_vote_l, one=True)  # Like this month, with prev button
