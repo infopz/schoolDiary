@@ -211,9 +211,9 @@ def view_manage_date(message, chat, shared):
         start_date = next_m + '01'
         stop_date = next_m + str(month_length[int(next_m)])
     if start_date != '' and stop_date != '':
-        m, k, conv_dict = useful_function.view_commitments_between(start_date, stop_date)
+        m, k, conv_dict = useful_function.view_tasks_between(start_date, stop_date)
         if m == '':
-            m = 'You have no commitments in this period, select another one'
+            m = 'You have no tasks in this period, select another one'
             keyboard = pzgram.create_keyboard(
                 [['This Week', 'Next Week'], ['This Month', 'Next Month'], ['Other', 'Back\U0001F519']], one=True)
             chat.send(m, reply_markup=keyboard)
@@ -274,7 +274,6 @@ def view_one(message, chat, shared):
 
 def view_edit_one(message, chat, shared):
     if message.text == 'Back\U0001F519':
-        print(shared['cache'])
         chat.send(shared['cache']['message'], reply_markup=shared['cache']['comm_keyb'])
         shared['status'] = 'view2'
         return
@@ -363,12 +362,12 @@ def set_new_notes(message, chat, shared):
 
 def find_command(chat, shared):
     keyboard = pzgram.create_keyboard([['Homeworks', 'Tests'], ['Both'], ['Menu\U0001F3B2', 'Back\U0001F519']], one=True)
-    chat.send('Select wich type of commitments you want to find:', reply_markup=keyboard)
+    chat.send('Select wich type of tasks you want to find:', reply_markup=keyboard)
     shared['cache'] = {}
     shared['status'] = 'find1'
 
 
-def find_ask_date(message, chat, shared):  # TODO: bold the day with commitments
+def find_ask_date(message, chat, shared):  # TODO: bold the day with tasks
     if message.text == 'Back\U0001F519':
         chat.send('Choose a command:')
         return
@@ -552,7 +551,6 @@ def view_vote_subj(message, chat, shared):
         convert_type = {'Practice': 'Pr', 'Oral': 'Or', 'Written': 'Wr'}
         m = ''
         for v in votes:
-            print(v)
             m += f'{v[0]} -  {convert_type[v[1]]} - {v[2][0:2]}/{v[2][2:4]}\n'
             if v[3] is not None:
                 m += '   ' + v[3] + '\n'
@@ -616,8 +614,6 @@ def view_times_send(message, chat, shared):
     subjects = times['days'][number_day]['subjects']
     m = ''
     for n, s in enumerate(subjects, start=1):
-        if n == 6:
-            m += '\n'
         m += str(n) + ' ' + s + '\n'
     chat.send(m)
     shared['status'] = ''
@@ -626,22 +622,22 @@ def view_times_send(message, chat, shared):
 
 
 def allert_timer(bot, shared):
-    h = datetime.now().strftime('%H')
-    if h == '14':
+    h = int(datetime.now().strftime('%H'))
+    if h == 14:
+        print("Timer 14")
         s = useful_function.check_tomorrow()
         if s != '':
             pzgram.Chat(20403805, bot).send(s)
-    elif h == '20':
-        tomorrow = (datetime.now()+timedelta(days=1)).strftime('%u')
-        if tomorrow != 7:
+    elif h == 20:
+        print("Timer 20")
+        tomorrow = int((datetime.now()+timedelta(days=1)).strftime('%u')) - 1
+        if tomorrow != 6:
             times = shared['times']
             subjects = times['days'][tomorrow]['subjects']
             m = ''
             for n, s in enumerate(subjects, start=1):
-                if n == 6:
-                    m += '\n'
                 m += str(n) + ' ' + s + '\n'
-            pzgram.Chat(20403805, bot).send("Here's your subjects for tomorrow")
+            pzgram.Chat(20403805, bot).send("Dear Egg\nHere's your subjects for tomorrow")
             pzgram.Chat(20403805, bot).send(m)
 
 
@@ -687,9 +683,10 @@ def start_action(shared):
     shared['status'] = ''
     shared['cache'] = {}
     shared['subjects'] = {'Math': 'Math', 'Italian': 'Ita', 'English': 'Eng', 'Systems': 'Sys', 'TPS': 'TPS',
-                          'History': 'Hist', 'Gymnastic': 'Gym', 'Telecom': 'Tele'}
+                          'Telecom': 'Tele', 'History': 'Hist', 'Phis. Edication': 'PE', 'GPI': 'GPI'}
     shared['text_dict'] = {'View': view_calendar, 'Find': find_command, 'New Test': new_test,
-                           'New Homework': new_homework, 'New Vote': new_vote_command, 'View Vote': view_vote_command}
+                           'New Homework': new_homework, 'New Vote': new_vote_command, 'View Vote': view_vote_command,
+                           'View Times': view_times_command}
     shared['status_dict'] = {'newHW': manage_date, 'newHW2': manage_subject, 'newHW3': manage_args_notes,
                              'newTest': manage_date, 'newTest2': manage_subject, 'newTest3': manage_args_notes,
                              'view': view_manage_date, 'view2': view_one, 'view3': view_edit_one,
@@ -707,6 +704,6 @@ bot.set_commands({'/newtest': new_test, '/view': view_calendar, '/newhw': new_ho
                   '/find': find_command, '/newvotes': new_vote_command, '/viewvotes': view_vote_command,
                   '/loadtimes': load_times, '/viewtimes': view_times_command})
 bot.set_function({'start_action': start_action, 'after_division': process_message})
-bot.set_timers({7200: allert_timer, 43200: set_keyboard})
-bot.set_keyboard([['View', 'Find'], ['New Test', 'New Homework'], ['New Vote', 'View Vote']])
+bot.set_timers({3600: allert_timer, 43200: set_keyboard})
+bot.set_keyboard([['View', 'Find'], ['New Test', 'New Homework'], ['New Vote', 'View Vote'],['View Times']])
 bot.run()
