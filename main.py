@@ -713,7 +713,11 @@ def start_action(shared):
 bot.set_commands({'/newtest': new_test, '/view': view_calendar, '/newhw': new_homework, '/start': start_command,
                   '/find': find_command, '/newvotes': new_vote_command, '/viewvotes': view_vote_command,
                   '/loadtimes': load_times, '/viewtimes': view_times_command})
+<<<<<<< HEAD
 bot.set_function({'start_action': start_action, 'after_division': process_message, 'before_division': check_user})
+=======
+bot.set_function({'start_action': start_action, 'after_division': process_message})
+>>>>>>> 9e93675b44d05d2c1e81619683bcd3bb31209761
 bot.set_timers({3600: allert_timer, 43200: set_keyboard})
 bot.set_keyboard([['View', 'Find'], ['New Test', 'New Homework'], ['New Vote', 'View Vote'],['View Times']])
 bot.run()
