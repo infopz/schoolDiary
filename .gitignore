@@ -4,3 +4,9 @@ diary.db
 __pycache__/
 .idea/
 /pzgram/__pycache__/
+/pzgram/__pycache__
+apiKey.py
+times.json
+.DS_Store
+._*
+/pzgram/._*

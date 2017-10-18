@@ -52,7 +52,7 @@ def check_tomorrow():
     not_compl_homeworks = []
     if len(homeworks) != 0:
         for i in range(len(homeworks)):
-            if homeworks[i][2] == 0:
+            if homeworks[i][3] == 0:
                 not_compl_homeworks.append(homeworks[i])
     if len(test) == 0 and len(not_compl_homeworks) == 0:
         return ''
@@ -60,17 +60,17 @@ def check_tomorrow():
     if len(test) != 0:
         s += 'Ehi, you have a test tomorrow!\n'
         for i in test:
-            if i[2] is not None:
-                s += '*'+i[0] + ' test*\n' + i[1] + ' - ' + i[2] + ' \n'
+            if i[3] is not None:
+                s += '*'+i[1] + ' test*\n' + i[2] + ' - ' + i[3] + ' \n'
             else:
-                s += '*' + i[0] + ' test*\n' + i[1] + '\n'
+                s += '*' + i[1] + ' test*\n' + i[2] + '\n'
     if len(not_compl_homeworks) != 0:
         if s != '':
             s += '\nAnd you also have homeworks:\n'
         else:
             s += 'Ehi, you have some homeworks for tomorrow!\n'
         for h in not_compl_homeworks:
-            s += '*' + h[0] + ' homework*\n' + h[1] + '\n'
+            s += '*' + h[1] + ' homework*\n' + h[2] + '\n'
     return s
 
 
@@ -170,7 +170,7 @@ def load_times():
     return json.loads(open('times.json', 'r').read())
 
 
-def view_commitments_between(start, stop):
+def view_tasks_between(start, stop):
     tests, homeworks = SQL_function.find_between(start, stop)
     s = ''
     current_date = start

@@ -140,6 +140,8 @@ class Bot:
                 updates = self.get_updates()
                 for u in updates:
                     try:
+                        if 'channel_post' in u:
+                            continue
                         message = self.parse_update(u)
                         if message.date < self.start_date and not self.accept_old_message:
                             continue
@@ -149,7 +151,8 @@ class Bot:
                         if self.before_division:
                             args = create_parameters_tuple(self.useful_function['before_division'].param,
                                                            self, chat, message, shared)
-                            self.useful_function['before_division'].func(*args)
+                            if self.useful_function['before_division'].func(*args):
+                                continue
                         if message.type == 'command':
                             self.divide_command(message, chat, shared)
                             continue  # Step Over the after_division
@@ -204,7 +207,7 @@ class Bot:
                     elif j == 'shared':
                         arg.append(shared)
                 func(*tuple(arg))
-                time.sleep(delay)
+                time.sleep(calc_delay(delay))
         except KeyboardInterrupt:
             pass
 

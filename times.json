@@ -1,39 +1,39 @@
 {
   "days": [
     {
-      "hours": 5,
+      "hours": 6,
       "subjects": [
-        "Math", "History", "Systems", "Systems", "TPS"
+        "Math", "English", "TPS", "Telecom", "Telecom", "Telecom"
         ]
     },
     {
       "hours": 5,
       "subjects": [
-        "Italian", "Telecom", "Telecom", "Gymnastic", "Gymnastic"
+        "Telecom", "English", "Math", "Religion", "Italian"
         ]
     },
     {
       "hours": 5,
       "subjects": [
-        "Italian", "Telecom", "Telecom", "Gymnastic", "Gymnastic"
+        "History", "History", "System", "Telecom", "English"
+        ]
+    },
+    {
+      "hours": 5,
+      "subjects": [
+        "System", "System", "System", "Math", "Italian"
         ]
     },
     {
       "hours": 7,
       "subjects": [
-        "Italian", "Telecom", "Telecom", "Gymnastic", "Gymnastic", "Systems", "Systems"
+        "System", "GPI", "Gymnastic", "Gymnastic", "TPS", "TPS", "TPS"
         ]
     },
     {
-      "hours": 5,
+      "hours": 4,
       "subjects": [
-        "Italian", "Telecom", "Telecom", "Gymnastic", "Gymnastic"
-        ]
-    },
-    {
-      "hours": 5,
-      "subjects": [
-        "Italian", "Telecom", "Telecom", "Gymnastic", "Gymnastic"
+        "Italian", "Italian", "GPI", "GPI"
         ]
     }
   ]

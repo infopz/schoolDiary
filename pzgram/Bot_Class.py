@@ -232,3 +232,9 @@ def default_help(chat, commands):
     for c in commands:
         possible_commands += commands[c].name + '\n'
     chat.send("Here's the list of possible commands:\n" + possible_commands)
+
+def calc_delay(delay):
+    seconds_today = (datetime.now().hour * 3600) + (datetime.now().minute * 60) + datetime.now().second
+    rem = seconds_today % delay
+    new_delay = delay - rem
+    return new_delay
